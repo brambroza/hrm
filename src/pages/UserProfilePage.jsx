@@ -6,14 +6,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
-import { User, Mail, Phone, MapPin, Briefcase, Calendar, Shield, Settings } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Shield, Settings, Building } from 'lucide-react';
 import UserProfileModal from '@/components/UserProfileModal';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
+import { companyService } from '@/services/companies';
 
 const UserProfilePage = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, organizationId } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [company, setCompany] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -31,6 +33,19 @@ const UserProfilePage = () => {
     fetchProfile();
   }, [user]);
 
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (!organizationId) return;
+      try {
+        const data = await companyService.getCompany(organizationId);
+        setCompany(data);
+      } catch (error) {
+        console.error('Failed to load company profile:', error);
+      }
+    };
+    fetchCompany();
+  }, [organizationId]);
+
   return (
     <>
       <Helmet>
@@ -40,12 +55,12 @@ const UserProfilePage = () => {
       <div className="space-y-6 max-w-4xl mx-auto">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('userProfile.profile')}</h1>
-          <p className="text-slate-500 dark:text-slate-400">View and manage your account settings</p>
+          <p className="text-slate-500 dark:text-slate-400">{t('userProfile.subtitle')}</p>
         </div>
 
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-bold">{t('employees.basicInfo')}</CardTitle>
+            <CardTitle className="text-xl font-bold">{t('userProfile.basicInfo')}</CardTitle>
             <div className="flex gap-2">
               <Button onClick={() => setShowEditModal(true)} variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-2" />
@@ -58,17 +73,17 @@ const UserProfilePage = () => {
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-32 w-32 border-4 border-slate-100 dark:border-slate-800">
                   <AvatarImage src={profile?.avatar_url} />
-                  <AvatarFallback className="text-2xl bg-slate-200 dark:bg-slate-800">
-                    {profile?.full_name?.charAt(0) || user?.email?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Role</p>
-                  <p className="font-semibold text-emerald-600 dark:text-emerald-400">{profile?.role || 'User'}</p>
-                </div>
+                <AvatarFallback className="text-2xl bg-slate-200 dark:bg-slate-800">
+                  {profile?.full_name?.charAt(0) || user?.email?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('userProfile.role')}</p>
+                <p className="font-semibold text-emerald-600 dark:text-emerald-400">{profile?.role || 'User'}</p>
               </div>
+            </div>
 
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                     <User className="w-4 h-4" />
@@ -103,6 +118,14 @@ const UserProfilePage = () => {
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
+                    <Building className="w-4 h-4" />
+                    {t('settings.companyName')}
+                  </div>
+                  <p className="font-medium text-slate-900 dark:text-white">{company?.name || '-'}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                     <Briefcase className="w-4 h-4" />
                     {t('userProfile.position')}
                   </div>
@@ -129,13 +152,13 @@ const UserProfilePage = () => {
 
         <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
            <CardHeader>
-             <CardTitle className="text-lg font-bold">Security</CardTitle>
+             <CardTitle className="text-lg font-bold">{t('userProfile.security')}</CardTitle>
            </CardHeader>
            <CardContent>
              <div className="flex items-center justify-between">
                 <div>
-                   <p className="font-medium text-slate-900 dark:text-white">Password</p>
-                   <p className="text-sm text-slate-500 dark:text-slate-400">Last changed recently</p>
+                   <p className="font-medium text-slate-900 dark:text-white">{t('userProfile.password')}</p>
+                   <p className="text-sm text-slate-500 dark:text-slate-400">{t('userProfile.lastChanged')}</p>
                 </div>
                 <Button variant="outline" onClick={() => setShowPasswordModal(true)}>
                    {t('userProfile.changePassword')}

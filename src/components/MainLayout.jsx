@@ -23,6 +23,12 @@ import { usePermission } from '@/hooks/usePermission';
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  // `window.innerWidth` was read straight in the render body, so the sidebar
+  // never noticed a resize: shrinking a desktop window left it stuck open and
+  // widening a phone window left it stuck hidden.
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true,
+  );
   const { user, signOut, role } = useAuth();
   const { canView } = usePermission();
   const { theme, toggleTheme } = useTheme();
@@ -52,6 +58,19 @@ const MainLayout = () => {
     };
     fetchUserProfile();
   }, [user]);
+
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 1024px)');
+    const handleChange = (event) => {
+      setIsDesktop(event.matches);
+      // Leaving the mobile breakpoint should also dismiss the overlay drawer,
+      // otherwise it stays mounted behind the desktop layout.
+      if (event.matches) setSidebarOpen(false);
+    };
+
+    query.addEventListener('change', handleChange);
+    return () => query.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -90,6 +109,24 @@ const MainLayout = () => {
       path: '/attendance',
       permission: 'time_attendance'
     },
+    {
+      icon: Calculator,
+      label: t('attendance.calculation'),
+      path: '/attendance-calculation',
+      permission: 'time_attendance'
+    },
+    {
+      icon: Clock,
+      label: t('attendance.otRequest'),
+      path: '/ot-requests',
+      permission: 'ot_request'
+    },
+    {
+      icon: CalendarOff,
+      label: t('common.leave'),
+      path: '/leave',
+      permission: 'leave'
+    },
     { 
       icon: DollarSign, 
       label: t('common.payroll'), 
@@ -100,7 +137,7 @@ const MainLayout = () => {
         { label: t('payroll.periods'), path: '/payroll/periods', permission: 'payroll', icon: Calendar },
         { label: t('payroll.calculate'), path: '/payroll/calculate', permission: 'payroll', icon: Calculator },
         { label: t('payroll.slips'), path: '/payroll/slips', permission: 'payroll', icon: FileText },
-        { label: 'รายงาน', path: '/payroll/reports', permission: 'payroll', icon: BarChart3 },
+        { label: t('common.reports'), path: '/payroll/reports', permission: 'payroll', icon: BarChart3 },
       ]
     },
     { 
@@ -109,17 +146,19 @@ const MainLayout = () => {
       path: '/reports', 
       permission: 'reports' 
     },
-    { 
-      icon: Settings, 
-      label: t('common.settings'), 
-      key: 'settings',
-      permission: 'settings',
-      children: [
-        { label: t('settings.settings'), path: '/settings', permission: 'settings' },
-        { label: t('settings.companySettings'), path: '/settings/company', permission: 'company_settings' },
-        { label: t('settings.systemConfig'), path: '/settings/system', permission: 'system_settings' },
-        { label: t('settings.integrations'), path: '/settings/integrations', permission: 'integrations' },
-        { label: t('settings.backupRecovery'), path: '/settings/backup', permission: 'backup_recovery' },
+        { 
+          icon: Settings, 
+          label: t('common.settings'), 
+          key: 'settings',
+          permission: 'settings',
+          children: [
+            { label: t('settings.settings'), path: '/settings', permission: 'settings' },
+            { label: t('settings.companySettings'), path: '/settings/company', permission: 'company_settings' },
+            { label: t('settings.departmentManagement'), path: '/settings/departments', permission: 'department' },
+            { label: t('settings.attendancePolicy'), path: '/settings/attendance-policy', permission: 'attendance_policy' },
+            { label: t('settings.systemConfig'), path: '/settings/system', permission: 'system_settings' },
+            { label: t('settings.integrations'), path: '/settings/integrations', permission: 'integrations' },
+            { label: t('settings.backupRecovery'), path: '/settings/backup', permission: 'backup_recovery' },
         { label: t('settings.auditLog'), path: '/settings/audit-log', permission: 'audit_log' },
         { label: t('settings.userManagement'), path: '/settings/users', permission: 'user_management' },
         { label: t('settings.manageTranslations'), path: '/settings/translate', permission: 'translate' },
@@ -164,7 +203,7 @@ const MainLayout = () => {
 
       {/* Sidebar */}
       <AnimatePresence>
-        {(sidebarOpen || window.innerWidth >= 1024) && (
+        {(sidebarOpen || isDesktop) && (
           <motion.aside
             initial={{ x: -300 }}
             animate={{ x: 0 }}
@@ -197,7 +236,7 @@ const MainLayout = () => {
             </div>
 
             <div className="px-4 mb-2 hidden lg:block">
-               {!collapsed && <p className="text-xs text-slate-500 dark:text-slate-500 uppercase tracking-wider font-semibold mb-2 ml-2">Main Menu</p>}
+               {!collapsed && <p className="text-xs text-slate-500 dark:text-slate-500 uppercase tracking-wider font-semibold mb-2 ml-2">{t('common.mainMenu')}</p>}
             </div>
 
             {/* Navigation */}
@@ -226,11 +265,11 @@ const MainLayout = () => {
                         onClick={() => toggleSubmenu(item.key)}
                         className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
                           isActive
-                            ? 'bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 font-medium'
+                            ? 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 font-medium'
                             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
-                        <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
+                        <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
                         <span className="flex-1 text-left text-sm">{item.label}</span>
                         <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       </button>
@@ -251,7 +290,7 @@ const MainLayout = () => {
                                   onClick={() => setSidebarOpen(false)}
                                   className={`block py-2 px-3 rounded-lg text-sm transition-colors ${
                                     location.pathname === child.path
-                                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10 font-medium'
+                                      ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 font-medium'
                                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                   }`}
                                 >
@@ -273,12 +312,12 @@ const MainLayout = () => {
                     onClick={() => setSidebarOpen(false)}
                     className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
                       isActive
-                        ? 'bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 font-medium shadow-sm'
+                        ? 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 font-medium shadow-sm'
                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                     } ${collapsed ? 'justify-center' : ''}`}
                     title={collapsed ? item.label : ''}
                   >
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`} />
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`} />
                     {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
                   </Link>
                 );

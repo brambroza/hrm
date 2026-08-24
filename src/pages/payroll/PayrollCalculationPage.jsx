@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getPayrollPeriods } from '@/services/payrollPeriods';
 import { getPayrollCalculations, calculatePayroll, addPayrollCalculation, deletePayrollCalculation } from '@/services/payroll';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import { supabase } from '@/lib/customSupabaseClient';
 
 const PayrollCalculationPage = () => {
@@ -27,7 +28,8 @@ const PayrollCalculationPage = () => {
   const [calculationsMap, setCalculationsMap] = useState({}); // Map employee_id -> calculation object
   
   const [selectedEmployees, setSelectedEmployees] = useState([]);
-  
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+
   // Fetch Periods
   useEffect(() => {
     const loadPeriods = async () => {
@@ -53,7 +55,10 @@ const PayrollCalculationPage = () => {
           const { data: empData, error: empError } = await supabase
               .from('employees')
               .select('id, name, employee_id, department, position, salary, status')
-              .eq('status', 'Active')
+              // 'active' lowercase is what the employee form and the schema
+              // default write. Filtering on 'Active' matched nothing, so this
+              // page always showed an empty employee list.
+              .eq('status', 'active')
               .order('name');
           
           if (empError) throw empError;
@@ -143,16 +148,24 @@ const PayrollCalculationPage = () => {
       setLoading(false);
   };
 
-  const handleDeleteCalculation = async (calcId) => {
+  const handleDeleteCalculation = (calcId) => {
       if (!calcId) return;
-      if (window.confirm("Are you sure you want to delete this calculation?")) {
-          const { error } = await deletePayrollCalculation(calcId);
-          if (error) {
-              toast({ variant: "destructive", title: "Error", description: error.message });
-          } else {
-              toast({ title: "Deleted", description: "Calculation removed." });
-              fetchEmployeesAndCalculations();
-          }
+      // Every other destructive action in the app uses ConfirmationModal; a raw
+      // window.confirm here was the one English browser dialog left in the UI.
+      setPendingDeleteId(calcId);
+  };
+
+  const confirmDeleteCalculation = async () => {
+      const calcId = pendingDeleteId;
+      setPendingDeleteId(null);
+      if (!calcId) return;
+
+      const { error } = await deletePayrollCalculation(calcId);
+      if (error) {
+          toast({ variant: "destructive", title: t('common.error'), description: error.message });
+      } else {
+          toast({ title: t('common.success') });
+          fetchEmployeesAndCalculations();
       }
   };
 
@@ -237,7 +250,7 @@ const PayrollCalculationPage = () => {
 
               {/* Employees Table */}
               <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-                  <table className="w-full text-sm text-left">
+                  <table className="w-full min-w-[720px] text-sm text-left">
                       <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase text-xs font-semibold">
                           <tr>
                               <th className="px-4 py-4 w-10">
@@ -332,6 +345,16 @@ const PayrollCalculationPage = () => {
               </div>
           </CardContent>
       </Card>
+
+      <ConfirmationModal
+        isOpen={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={confirmDeleteCalculation}
+        title={t('common.delete')}
+        description={t('payroll.confirmDeleteCalculation')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+      />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { formatThaiDateTime } from '@/utils/helpers';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -70,7 +71,7 @@ const ViewTranslationModal = ({ isOpen, onClose, translation, onEdit }) => {
           <div className="grid grid-cols-2 gap-4 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
                <Clock className="w-4 h-4" />
-               <span>{t('translate.lastModified')}: {translation.updated_at ? new Date(translation.updated_at).toLocaleString() : '-'}</span>
+               <span>{t('translate.lastModified')}: {translation.updated_at ? formatThaiDateTime(translation.updated_at) : '-'}</span>
             </div>
             <div className="flex items-center gap-2">
                <User className="w-4 h-4" />

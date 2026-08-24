@@ -18,16 +18,11 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import AddPayrollPeriodModal from '@/components/AddPayrollPeriodModal';
 import EditPayrollPeriodModal from '@/components/EditPayrollPeriodModal';
 import { getStatusLabel, getStatusColor, VALID_STATUSES, normalizeStatus } from '@/utils/statusValidator';
+import { formatThaiDate } from '@/utils/helpers';
 
 const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    if (isNaN(date)) return "-";
-    return date.toLocaleDateString('th-TH', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+  if (!dateString) return "-";
+  return formatThaiDate(dateString);
 };
 
 const PayrollPeriodsPage = () => {
@@ -242,7 +237,9 @@ const PayrollPeriodsPage = () => {
           </div>
 
           <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-            <table className="w-full text-sm text-left">
+            {/* The table scrolls inside its own box so the page body never scrolls sideways on a phone. */}
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm text-left">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase text-xs font-semibold">
                 <tr>
                   <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => handleSort('name')}>
@@ -332,6 +329,7 @@ const PayrollPeriodsPage = () => {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Pagination Controls */}

@@ -89,7 +89,7 @@ const SetPermissionsModal = ({ isOpen, onClose, user }) => {
         </DialogHeader>
 
         <div className="py-4 overflow-x-auto max-h-[60vh]">
-          <table className="w-full border-collapse">
+          <table className="w-full min-w-[720px] border-collapse">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700">
                 <th className="py-2 px-4 text-left font-medium text-slate-500">{t('permissions.module')}</th>

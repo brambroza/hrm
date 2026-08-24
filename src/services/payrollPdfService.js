@@ -1,6 +1,7 @@
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { formatThaiDateTime, getThaiISODate } from '@/utils/helpers';
 // Note: In a real app, you'd import a Thai font like THSarabunNew-normal.js here. 
 // For this environment, we'll use default fonts or simulate the structure.
 // If actual Thai font support is strictly required, we'd need to add the font file and register it.
@@ -92,7 +93,7 @@ export const generatePayrollSlipPdf = (payrollData, employeeData, companyData) =
   
   doc.setTextColor(0,0,0);
   doc.setFontSize(10);
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 280);
+  doc.text(`Generated on: ${formatThaiDateTime(new Date())}`, 15, 280);
   doc.text("Authorized Signature", 150, 270, { align: 'center' });
   doc.line(130, 265, 170, 265);
 
@@ -108,7 +109,7 @@ export const generatePayrollReportPdf = (reportData, periodName) => {
     
     doc.setFontSize(12);
     doc.text(`Period: ${periodName}`, 105, 30, { align: 'center' });
-    doc.text(`Generated Date: ${new Date().toLocaleDateString('th-TH')}`, 105, 38, { align: 'center' });
+    doc.text(`Generated Date: ${formatThaiDateTime(new Date())}`, 105, 38, { align: 'center' });
 
     // Summary Section
     doc.setFontSize(14);
@@ -181,5 +182,5 @@ export const generatePayrollReportPdf = (reportData, periodName) => {
         columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } }
     });
 
-    doc.save(`payroll_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`payroll_report_${getThaiISODate()}.pdf`);
 };

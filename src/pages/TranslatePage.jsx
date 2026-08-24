@@ -23,6 +23,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import { exportToExcel } from '@/utils/helpers';
 import { usePermission } from '@/hooks/usePermission';
 import PermissionGuard from '@/components/PermissionGuard';
+import AccessDenied from '@/components/AccessDenied';
 
 const TranslatePage = () => {
   const { t } = useTranslation();
@@ -238,12 +239,7 @@ const TranslatePage = () => {
   };
 
   if (!canView('translate')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-slate-500">You do not have permission to manage translations.</p>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   return (
@@ -353,7 +349,7 @@ const TranslatePage = () => {
         {/* Table */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
            <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[720px]">
                  <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                     <tr>
                        <th className="px-6 py-4 w-12">

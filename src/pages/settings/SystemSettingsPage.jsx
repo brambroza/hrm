@@ -14,6 +14,7 @@ import PermissionGuard from '@/components/PermissionGuard';
 import { systemSettingsService } from '@/services/systemSettings';
 import { useApi } from '@/hooks/useApi';
 import { useForm } from '@/hooks/useForm';
+import AccessDenied from '@/components/AccessDenied';
 
 const SystemSettingsPage = () => {
   const { t } = useTranslation();
@@ -94,7 +95,7 @@ const SystemSettingsPage = () => {
     setFieldValue('working_days', newDays);
   };
 
-  if (!canView('system_settings')) return <div className="p-8 text-center">Access Denied</div>;
+  if (!canView('system_settings')) return <AccessDenied />;
 
   return (
     <>

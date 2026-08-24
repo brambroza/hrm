@@ -1,4 +1,5 @@
 
+import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Helmet } from 'react-helmet';
@@ -10,8 +11,10 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import { motion } from 'framer-motion';
 import { usePermission } from '@/hooks/usePermission';
 import PermissionGuard from '@/components/PermissionGuard';
+import AccessDenied from '@/components/AccessDenied';
 
 const AllowancesDeductionsPage = () => {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,8 +56,8 @@ const AllowancesDeductionsPage = () => {
       console.error('Error fetching allowances:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to load data.'
+        title: t('common.error'),
+        description: t('common.error')
       });
     } finally {
       setLoading(false);
@@ -101,21 +104,21 @@ const AllowancesDeductionsPage = () => {
           .update(formData)
           .eq('id', currentItem.id);
         if (error) throw error;
-        toast({ title: 'Success', description: 'Item updated successfully.' });
+        toast({ title: t('common.success'), description: 'Item updated successfully.' });
       } else {
         // Create
         const { error } = await supabase
           .from('allowances_deductions')
           .insert([formData]);
         if (error) throw error;
-        toast({ title: 'Success', description: 'Item created successfully.' });
+        toast({ title: t('common.success'), description: 'Item created successfully.' });
       }
       setIsModalOpen(false);
       fetchItems();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t('common.error'),
         description: error.message
       });
     }
@@ -130,24 +133,19 @@ const AllowancesDeductionsPage = () => {
         .eq('id', currentItem.id);
       
       if (error) throw error;
-      toast({ title: 'Success', description: 'Item deleted successfully.' });
+      toast({ title: t('common.success'), description: 'Item deleted successfully.' });
       fetchItems();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t('common.error'),
         description: error.message
       });
     }
   };
 
   if (!canView('payroll')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-slate-500">You do not have permission to view payroll.</p>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   const filteredItems = items.filter(item => 
@@ -162,7 +160,7 @@ const AllowancesDeductionsPage = () => {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Allowances & Deductions</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('payroll.allowancesDeductions')}</h1>
           <p className="text-slate-500 dark:text-slate-400">Manage payroll components for calculations.</p>
         </div>
         <div className="flex gap-2">
@@ -190,7 +188,7 @@ const AllowancesDeductionsPage = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search items..." 
+              placeholder={t('payroll.searchItems')} 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -204,15 +202,15 @@ const AllowancesDeductionsPage = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full min-w-[720px] text-sm text-left">
             <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 font-medium">
               <tr>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Calculation</th>
-                <th className="px-6 py-4">Default Value</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4">{t('payroll.itemName')}</th>
+                <th className="px-6 py-4">{t('payroll.itemType')}</th>
+                <th className="px-6 py-4">{t('payroll.calculation')}</th>
+                <th className="px-6 py-4">{t('payroll.defaultValue')}</th>
+                <th className="px-6 py-4">{t('common.status')}</th>
+                <th className="px-6 py-4 text-right">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -296,7 +294,7 @@ const AllowancesDeductionsPage = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Item Name</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('payroll.itemName')}</label>
               <input
                 required
                 type="text"
@@ -309,31 +307,31 @@ const AllowancesDeductionsPage = () => {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Type</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('payroll.itemType')}</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  <option value="income">Income (Earnings)</option>
-                  <option value="deduction">Deduction</option>
+                  <option value="income">{t('payroll.income')}</option>
+                  <option value="deduction">{t('payroll.deduction')}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Calculation</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('payroll.calculation')}</label>
                 <select
                   value={formData.calculation_type}
                   onChange={(e) => setFormData({...formData, calculation_type: e.target.value})}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  <option value="fixed">Fixed Amount</option>
-                  <option value="variable">Variable / Formula</option>
+                  <option value="fixed">{t('payroll.fixedAmount')}</option>
+                  <option value="variable">{t('payroll.variableAmount')}</option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Default Value</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('payroll.defaultValue')}</label>
               <input
                 type="number"
                 step="0.01"
@@ -361,12 +359,12 @@ const AllowancesDeductionsPage = () => {
                 onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
                 className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
               />
-              <label htmlFor="is_active" className="text-sm text-slate-700 dark:text-slate-300">Active Status</label>
+              <label htmlFor="is_active" className="text-sm text-slate-700 dark:text-slate-300">{t('payroll.activeStatus')}</label>
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white">Save Item</Button>
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white">{t('payroll.saveItem')}</Button>
             </div>
           </form>
         </DialogContent>

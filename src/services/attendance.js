@@ -5,7 +5,7 @@ export const attendanceService = {
   getAttendance: async () => {
     const { data, error } = await supabase
       .from('attendance_logs')
-      .select('*, employees(name, employee_id)')
+      .select('*, employees(name_th, name, employee_id)')
       .order('log_date', { ascending: false });
     if (error) throw error;
     return data;

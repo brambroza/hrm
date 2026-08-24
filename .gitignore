@@ -1,1 +1,35 @@
+# Dependencies
+node_modules/
+.yarn/
+.pnp.*
+
+# Build output
+dist/
+build/
+*.local
+
+# Environment variables — never commit these
+.env
+.env.*
+!.env.example
+
+# Deployment
 .vercel
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Editor and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

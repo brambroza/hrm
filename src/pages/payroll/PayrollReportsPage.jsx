@@ -297,7 +297,7 @@ const PayrollReportsPage = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full min-w-[720px] text-sm">
                                 <thead className="bg-slate-50 text-slate-500">
                                     <tr>
                                         <th className="px-4 py-3 text-left">Department</th>
@@ -326,7 +326,7 @@ const PayrollReportsPage = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full min-w-[720px] text-sm">
                                 <thead className="bg-slate-50 text-slate-500">
                                     <tr>
                                         <th className="px-4 py-3 text-left">Type</th>

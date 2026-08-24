@@ -12,13 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useUsers } from '@/hooks/useUsers';
-import { exportToExcel } from '@/utils/helpers';
+import { exportToExcel, formatThaiDate } from '@/utils/helpers';
 import AddUserModal from '@/components/AddUserModal';
 import EditUserModal from '@/components/EditUserModal';
 import SetPermissionsModal from '@/components/SetPermissionsModal';
 import ConfirmDeleteUserModal from '@/components/ConfirmDeleteUserModal';
 import { usePermission } from '@/hooks/usePermission';
 import PermissionGuard from '@/components/PermissionGuard';
+import AccessDenied from '@/components/AccessDenied';
 
 const UserManagementPage = () => {
   const { t } = useTranslation();
@@ -69,7 +70,7 @@ const UserManagementPage = () => {
       Email: u.email,
       Role: u.role || 'N/A',
       Status: u.status,
-      Created: new Date(u.created_at).toLocaleDateString()
+      Created: formatThaiDate(u.created_at)
     }));
     exportToExcel(data, 'User_List');
   };
@@ -87,12 +88,7 @@ const UserManagementPage = () => {
   };
 
   if (!canView('user_management')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-slate-500">You do not have permission to view user management.</p>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   return (
@@ -160,7 +156,7 @@ const UserManagementPage = () => {
         {/* Table */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[720px]">
               <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">{t('userManagement.role')}</th>

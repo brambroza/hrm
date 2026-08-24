@@ -11,8 +11,10 @@ import { Loader2, Database, Download, RotateCcw, Trash2, HardDrive, FileJson } f
 import { usePermission } from '@/hooks/usePermission';
 import PermissionGuard from '@/components/PermissionGuard';
 import { backupService } from '@/services/backups';
+import { formatThaiDateTime } from '@/utils/helpers';
 import { useApi } from '@/hooks/useApi';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import AccessDenied from '@/components/AccessDenied';
 
 const BackupRecoveryPage = () => {
   const { t } = useTranslation();
@@ -80,7 +82,7 @@ const BackupRecoveryPage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (!canView('backup_recovery')) return <div className="p-8 text-center">Access Denied</div>;
+  if (!canView('backup_recovery')) return <AccessDenied />;
 
   return (
     <>
@@ -146,7 +148,7 @@ const BackupRecoveryPage = () => {
         {/* Backups Table */}
         <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
            <div className="overflow-x-auto">
-             <table className="w-full">
+             <table className="w-full min-w-[720px]">
                <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                  <tr>
                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">Date & Time</th>
@@ -163,7 +165,7 @@ const BackupRecoveryPage = () => {
                     backups.map((backup) => (
                       <tr key={backup.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
-                           {new Date(backup.created_at).toLocaleString()}
+                           {formatThaiDateTime(backup.created_at)}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-900 dark:text-white font-medium flex items-center gap-2">
                            <FileJson className="w-4 h-4 text-slate-400" />

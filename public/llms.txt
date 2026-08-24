@@ -1,0 +1,15 @@
+## Pages
+- [- Employee Detail](/employeedetail): Employee details
+- [- HRM System](/attendancecalculation): No description available
+- [- HRM System](/auditlog): No description available
+- [- HRM System](/dashboard): No description available
+- [- HRM System](/employeelist): Employee Management
+- [- HRM System](/leavemanagement): No description available
+- [- HRM System](/otrequest): No description available
+- [- HRM System](/settings): No description available
+- [- HRM System](/timeattendance): Time and Attendance Management
+- [- HRM System](/translate): No description available
+- [- HRM System](/usermanagement): No description available
+- [- HRM System](/userprofile): No description available
+- [Untitled Page](/login): Login to HRM System
+- [ระบบบริหารงานบุคคล HRM สำหรับธุรกิจไทย | เวลาทำงาน OT การลา เงินเดือน](/landing): ระบบ HRM ครบวงจรสำหรับ SME ไทย จัดการทะเบียนพนักงาน เวลาเข้า-ออก กะทำงาน OT การลา และเงินเดือน คำนวณตามกฎหมายแรงงานไทย ใช้งานภาษาไทยและอังกฤษ

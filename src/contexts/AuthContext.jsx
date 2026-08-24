@@ -18,10 +18,23 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(null);
   const [permissions, setPermissions] = useState([]);
+  const [organizationId, setOrganizationId] = useState(null);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Auth session error:', error);
+        supabase.auth.signOut({ scope: 'local' });
+        setSession(null);
+        setUser(null);
+        setRole(null);
+        setPermissions([]);
+        setOrganizationId(null);
+        setLoading(false);
+        return;
+      }
+      const session = data?.session || null;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -33,16 +46,31 @@ export const AuthProvider = ({ children }) => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // We do NOT blindly update users table on every auth change to avoid overwriting roles
-        await fetchUserRoleAndPermissions(session.user.id);
-      } else {
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchUserRoleAndPermissions(session.user.id);
+        }
+      }
+
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setSession(null);
+        setUser(null);
         setRole(null);
         setPermissions([]);
+        setOrganizationId(null);
       }
+
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        supabase.auth.signOut({ scope: 'local' });
+        setSession(null);
+        setUser(null);
+        setRole(null);
+        setPermissions([]);
+        setOrganizationId(null);
+      }
+
       setLoading(false);
     });
 
@@ -57,13 +85,14 @@ export const AuthProvider = ({ children }) => {
       // Use maybeSingle() to handle cases where user record might not exist yet
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('role')
+        .select('role, organization_id')
         .eq('id', userId)
         .maybeSingle();
       
       if (userError) throw userError;
       
       const userRole = userData?.role || 'employee';
+      setOrganizationId(userData?.organization_id || null);
       setRole(userRole);
 
       // 2. Fetch role_id from roles table
@@ -103,6 +132,7 @@ export const AuthProvider = ({ children }) => {
       // Fail safely
       setRole('employee');
       setPermissions([]);
+      setOrganizationId(null);
     }
   };
 
@@ -128,15 +158,30 @@ export const AuthProvider = ({ children }) => {
     return { error };
   };
 
+  /**
+   * Email the user a link that lets them choose a new password.
+   *
+   * @param {string} email
+   * @returns {Promise<{error: Error|null}>}
+   */
+  const resetPassword = async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/profile`,
+    });
+    return { error };
+  };
+
   const value = {
     user,
     session,
     loading,
     role,
     permissions,
+    organizationId,
     hasPermission,
     signIn,
     signOut,
+    resetPassword,
     fetchUserRoleAndPermissions
   };
 

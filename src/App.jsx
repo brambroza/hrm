@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import ThemeProvider from '@/components/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import MainLayout from '@/components/MainLayout';
 import DashboardPage from '@/pages/DashboardPage';
@@ -13,6 +14,7 @@ import EmployeeDetailPage from '@/pages/EmployeeDetailPage';
 import TimeAttendancePage from '@/pages/TimeAttendancePage';
 import AuditLogPage from '@/pages/AuditLogPage';
 import SettingsPage from '@/pages/SettingsPage';
+import LeaveManagementPage from '@/pages/LeaveManagementPage';
 import AllowancesDeductionsPage from '@/pages/payroll/AllowancesDeductionsPage';
 import PayrollPeriodsPage from '@/pages/payroll/PayrollPeriodsPage';
 import PayrollCalculationPage from '@/pages/payroll/PayrollCalculationPage';
@@ -25,6 +27,11 @@ import CompanySettingsPage from '@/pages/settings/CompanySettingsPage';
 import SystemSettingsPage from '@/pages/settings/SystemSettingsPage';
 import IntegrationsPage from '@/pages/settings/IntegrationsPage';
 import BackupRecoveryPage from '@/pages/settings/BackupRecoveryPage';
+import AttendancePolicyPage from '@/pages/settings/AttendancePolicyPage';
+import ReportsPage from '@/pages/ReportsPage';
+import AttendanceCalculationPage from '@/pages/AttendanceCalculationPage';
+import DepartmentManagementPage from '@/pages/settings/DepartmentManagementPage';
+import OtRequestPage from '@/pages/OtRequestPage';
 import './i18n/config';
 
 function App() {
@@ -34,7 +41,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<LandingPage />} />
             
             <Route
               path="/*"
@@ -48,6 +55,10 @@ function App() {
               <Route path="employees" element={<EmployeeListPage />} />
               <Route path="employees/:id" element={<EmployeeDetailPage />} />
               <Route path="attendance" element={<TimeAttendancePage />} />
+              <Route path="attendance-calculation" element={<AttendanceCalculationPage />} />
+              <Route path="ot-requests" element={<OtRequestPage />} />
+              <Route path="leave" element={<LeaveManagementPage />} />
+              <Route path="reports" element={<ReportsPage />} />
               
               {/* Payroll Routes */}
               <Route path="payroll/setup" element={<AllowancesDeductionsPage />} />
@@ -59,6 +70,8 @@ function App() {
               {/* Settings Routes */}
               <Route path="settings" element={<SettingsPage />} />
               <Route path="settings/company" element={<CompanySettingsPage />} />
+              <Route path="settings/departments" element={<DepartmentManagementPage />} />
+              <Route path="settings/attendance-policy" element={<AttendancePolicyPage />} />
               <Route path="settings/system" element={<SystemSettingsPage />} />
               <Route path="settings/integrations" element={<IntegrationsPage />} />
               <Route path="settings/backup" element={<BackupRecoveryPage />} />

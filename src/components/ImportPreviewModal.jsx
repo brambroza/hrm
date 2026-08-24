@@ -41,7 +41,7 @@ const ImportPreviewModal = ({ isOpen, onClose, data, onConfirm, loading }) => {
            </div>
 
            <div className="flex-1 overflow-auto border rounded-md dark:border-slate-700">
-             <table className="w-full text-sm">
+             <table className="w-full min-w-[720px] text-sm">
                <thead className="bg-slate-100 dark:bg-slate-800 sticky top-0">
                  <tr>
                    <th className="px-4 py-3 text-left font-medium text-slate-500">Action</th>

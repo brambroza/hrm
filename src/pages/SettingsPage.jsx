@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Users, Settings as SettingsIcon, Database, Link as LinkIcon, FileText, Globe } from 'lucide-react';
+import { Building2, Users, Settings as SettingsIcon, Database, Link as LinkIcon, FileText, Globe, Clock, LayoutGrid } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
+import AccessDenied from '@/components/AccessDenied';
 
 const SettingsPage = () => {
   const { t } = useTranslation();
@@ -28,6 +29,22 @@ const SettingsPage = () => {
       path: '/settings/system',
       color: 'bg-purple-100 text-purple-600',
       permission: 'system_settings'
+    },
+    {
+      icon: LayoutGrid,
+      title: t('settings.departmentManagement'),
+      description: 'Create and manage departments for the organization',
+      path: '/settings/departments',
+      color: 'bg-amber-100 text-amber-600',
+      permission: 'department'
+    },
+    {
+      icon: Clock,
+      title: t('settings.attendancePolicy'),
+      description: 'Set late, OT, and missing scan policies',
+      path: '/settings/attendance-policy',
+      color: 'bg-amber-100 text-amber-600',
+      permission: 'attendance_policy'
     },
     {
       icon: LinkIcon,
@@ -72,12 +89,7 @@ const SettingsPage = () => {
   ];
 
   if (!canView('settings')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-slate-500">You do not have permission to view settings.</p>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   return (

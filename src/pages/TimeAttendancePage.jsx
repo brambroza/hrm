@@ -10,18 +10,14 @@ import { usePermission } from '@/hooks/usePermission';
 import PermissionGuard from '@/components/PermissionGuard';
 import { Button } from '@/components/ui/button';
 import { Plus, Download } from 'lucide-react';
+import AccessDenied from '@/components/AccessDenied';
 
 const TimeAttendancePage = () => {
   const { t } = useTranslation();
   const { canView } = usePermission();
 
   if (!canView('time_attendance')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-slate-500">You do not have permission to view attendance.</p>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   return (
@@ -54,9 +50,9 @@ const TimeAttendancePage = () => {
 
         <Tabs defaultValue="attendance" className="w-full">
           <TabsList className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1">
-            <TabsTrigger value="attendance" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">{t('attendance.attendanceLog')}</TabsTrigger>
-            <TabsTrigger value="shifts" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">{t('attendance.shiftSetup')}</TabsTrigger>
-            <TabsTrigger value="assignments" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">{t('attendance.shiftAssignment')}</TabsTrigger>
+            <TabsTrigger value="attendance" className="data-[state=active]:bg-black dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">{t('attendance.attendanceLog')}</TabsTrigger>
+            <TabsTrigger value="shifts" className="data-[state=active]:bg-black dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">{t('attendance.shiftSetup')}</TabsTrigger>
+            <TabsTrigger value="assignments" className="data-[state=active]:bg-black dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">{t('attendance.shiftAssignment')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="attendance">

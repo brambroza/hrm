@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
@@ -7,9 +8,10 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Edit } from 'lucide-react';
 import EditEmployeeModal from '@/components/EditEmployeeModal';
 import { Helmet } from 'react-helmet';
-import { formatThaiDate } from '@/utils/helpers';
+import { formatThaiDate, formatThaiTime } from '@/utils/helpers';
 
 const EmployeeDetailPage = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
@@ -57,7 +59,7 @@ const EmployeeDetailPage = () => {
   if (!employee) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-400">Employee not found</p>
+        <p className="text-slate-400">{t('employees.notFound')}</p>
         <Button onClick={() => navigate('/employees')} className="mt-4">
           Go Back
         </Button>
@@ -68,7 +70,7 @@ const EmployeeDetailPage = () => {
   return (
     <>
       <Helmet>
-        <title>{employee.name_th} - Employee Detail</title>
+        <title>{employee.name_th || employee.name} - Employee Detail</title>
         <meta name="description" content="Employee details" />
       </Helmet>
       <div className="space-y-6">
@@ -79,7 +81,7 @@ const EmployeeDetailPage = () => {
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-white">{employee.name_th}</h1>
+              <h1 className="text-3xl font-bold text-white">{employee.name_th || employee.name}</h1>
               <p className="text-slate-400">{employee.employee_id}</p>
             </div>
           </div>
@@ -91,10 +93,10 @@ const EmployeeDetailPage = () => {
 
         <Tabs defaultValue="basic" className="w-full">
           <TabsList className="bg-slate-900 border border-slate-800">
-            <TabsTrigger value="basic" className="data-[state=active]:bg-blue-500">Basic Info</TabsTrigger>
-            <TabsTrigger value="employment" className="data-[state=active]:bg-blue-500">Employment</TabsTrigger>
-            <TabsTrigger value="migrant" className="data-[state=active]:bg-blue-500">Migrant Documents</TabsTrigger>
-            <TabsTrigger value="attendance" className="data-[state=active]:bg-blue-500">Attendance</TabsTrigger>
+            <TabsTrigger value="basic" className="data-[state=active]:bg-blue-500">{t('employees.basicInfo')}</TabsTrigger>
+            <TabsTrigger value="employment" className="data-[state=active]:bg-blue-500">{t('employees.employment')}</TabsTrigger>
+            <TabsTrigger value="migrant" className="data-[state=active]:bg-blue-500">{t('employees.migrantDocuments')}</TabsTrigger>
+            <TabsTrigger value="attendance" className="data-[state=active]:bg-blue-500">{t('employees.attendanceHistory')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic">
@@ -110,6 +112,8 @@ const EmployeeDetailPage = () => {
                 <InfoItem label="Birthdate" value={employee.birthdate ? formatThaiDate(employee.birthdate) : 'N/A'} />
                 <InfoItem label="Phone" value={employee.phone} />
                 <InfoItem label="Email" value={employee.email} />
+                <InfoItem label="National ID" value={employee.national_id} />
+                <InfoItem label="Nationality" value={employee.nationality} />
               </div>
             </motion.div>
           </TabsContent>
@@ -142,7 +146,7 @@ const EmployeeDetailPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoItem label="Passport Number" value={employee.passport_number} />
                 <InfoItem label="Work Permit Number" value={employee.work_permit_number} />
-                <InfoItem label="Visa Expiry" value={employee.visa_expiry ? formatThaiDate(employee.visa_expiry) : 'N/A'} />
+                <InfoItem label="Work Permit Expiry" value={employee.work_permit_expiry ? formatThaiDate(employee.work_permit_expiry) : 'N/A'} />
                 <InfoItem label="90-Day Report Date" value={employee.ninety_day_report_date ? formatThaiDate(employee.ninety_day_report_date) : 'N/A'} />
                 <InfoItem label="Migrant Group" value={employee.migrant_group} />
                 <InfoItem label="CI/BT Number" value={employee.ci_bt_number} />
@@ -158,14 +162,14 @@ const EmployeeDetailPage = () => {
               className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden"
             >
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[720px]">
                   <thead className="bg-slate-800">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Date</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Check In</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Check Out</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Hours</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Status</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('common.date')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('attendanceCalc.checkIn')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('attendanceCalc.checkOut')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('employees.hours')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('common.status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
@@ -173,10 +177,10 @@ const EmployeeDetailPage = () => {
                       <tr key={att.id}>
                         <td className="px-6 py-4 text-sm text-white">{formatThaiDate(att.log_date)}</td>
                         <td className="px-6 py-4 text-sm text-slate-300">
-                          {att.check_in ? new Date(att.check_in).toLocaleTimeString('th-TH') : '-'}
+                          {att.check_in ? formatThaiTime(att.check_in) : '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-300">
-                          {att.check_out ? new Date(att.check_out).toLocaleTimeString('th-TH') : '-'}
+                          {att.check_out ? formatThaiTime(att.check_out) : '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-300">{att.hours_worked || '-'}</td>
                         <td className="px-6 py-4 text-sm">

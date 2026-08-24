@@ -14,10 +14,13 @@ import { companyService } from '@/services/companies';
 import { useApi } from '@/hooks/useApi';
 import { useForm } from '@/hooks/useForm';
 import { supabase } from '@/lib/customSupabaseClient';
+import { useAuth } from '@/contexts/AuthContext';
+import AccessDenied from '@/components/AccessDenied';
 
 const CompanySettingsPage = () => {
   const { t } = useTranslation();
   const { canView } = usePermission();
+  const { organizationId } = useAuth();
   const { loading: apiLoading, request } = useApi();
   const [uploading, setUploading] = useState(false);
   const [companyId, setCompanyId] = useState(null);
@@ -57,13 +60,15 @@ const CompanySettingsPage = () => {
   } = useForm(initialValues, validate);
 
   useEffect(() => {
-    if (canView('company_settings')) {
+    if (canView('company_settings') && organizationId) {
       loadCompanyData();
     }
-  }, []);
+  }, [organizationId]);
 
   const loadCompanyData = async () => {
-    const { data } = await request(companyService.getCompany);
+    const { data } = await request(() => companyService.getCompany(organizationId));
+
+   
     if (data) {
       setCompanyId(data.id);
       setValues({
@@ -86,7 +91,7 @@ const CompanySettingsPage = () => {
 
   const onSubmit = async (formData) => {
     await request(
-      () => companyService.updateCompany({ id: companyId, ...formData }),
+      () => companyService.updateCompany({ id: companyId, organizationId, ...formData }),
       null,
       t('messages.savedSuccess')
     );
@@ -119,7 +124,7 @@ const CompanySettingsPage = () => {
   };
 
   if (!canView('company_settings')) {
-    return <div className="p-8 text-center">Access Denied</div>;
+    return <AccessDenied />;
   }
 
   return (

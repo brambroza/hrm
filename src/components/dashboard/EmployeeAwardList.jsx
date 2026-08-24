@@ -44,7 +44,7 @@ const EmployeeAwardList = ({ awards = [] }) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
               <th className="pb-3 font-medium">SL</th>

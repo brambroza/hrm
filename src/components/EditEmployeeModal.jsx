@@ -4,50 +4,98 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { logAuditTrail } from '@/utils/helpers';
+import { useAuth } from '@/contexts/AuthContext';
+import { departmentService } from '@/services/departments';
 
 const EditEmployeeModal = ({ isOpen, onClose, employee, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [departments, setDepartments] = useState([]);
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
     if (employee) {
-      // Map employee data to form data, ensuring we only use fields present in schema
       setFormData({
-        name: employee.name || '',
+        name_th: employee.name_th || employee.name || '',
+        name_en: employee.name_en || '',
+        national_id: employee.national_id || '',
         email: employee.email || '',
         phone: employee.phone || '',
         position: employee.position || '',
         department: employee.department || '',
+        employment_type: employee.employment_type || '',
+        branch: employee.branch || '',
         salary: employee.salary || '',
         start_date: employee.start_date || '',
         status: employee.status || 'active',
-        role: employee.role || 'staff'
+        role: employee.role || 'employee',
+        passport_number: employee.passport_number || '',
+        work_permit_number: employee.work_permit_number || '',
+        work_permit_expiry: employee.work_permit_expiry || '',
+        nationality: employee.nationality || '',
+        photo_url: employee.photo_url || ''
       });
     }
   }, [employee]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const data = await departmentService.getDepartments();
+        setDepartments(data || []);
+      } catch (error) {
+        console.error('Failed to load departments:', error);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      const payload = {
+        name: formData.name_th || formData.name_en,
+        name_th: formData.name_th,
+        name_en: formData.name_en || null,
+        national_id: formData.national_id || null,
+        email: formData.email,
+        phone: formData.phone,
+        position: formData.position,
+        department: formData.department,
+        employment_type: formData.employment_type || null,
+        branch: formData.branch || null,
+        salary: formData.salary ? parseFloat(formData.salary) : null,
+        start_date: formData.start_date || null,
+        status: formData.status,
+        role: formData.role,
+        passport_number: formData.passport_number || null,
+        work_permit_number: formData.work_permit_number || null,
+        work_permit_expiry: formData.work_permit_expiry || null,
+        nationality: formData.nationality || null,
+        photo_url: formData.photo_url || null
+      };
+
+      const { data, error } = await supabase
         .from('employees')
-        .update({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          position: formData.position,
-          department: formData.department,
-          salary: formData.salary ? parseFloat(formData.salary) : null,
-          start_date: formData.start_date || null,
-          status: formData.status,
-          role: formData.role
-        })
-        .eq('id', employee.id);
+        .update(payload)
+        .eq('id', employee.id)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      await logAuditTrail(
+        user?.id || null,
+        'UPDATE',
+        'employees',
+        employee.id,
+        employee,
+        data
+      );
 
       toast({
         title: 'Success',
@@ -86,13 +134,23 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onSuccess }) => {
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Name *</label>
+                <label className={labelClass}>Name (Thai) *</label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name || ''}
+                  name="name_th"
+                  value={formData.name_th || ''}
                   onChange={handleChange}
                   required
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Name (English)</label>
+                <input
+                  type="text"
+                  name="name_en"
+                  value={formData.name_en || ''}
+                  onChange={handleChange}
                   className={inputClass}
                 />
               </div>
@@ -112,6 +170,16 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onSuccess }) => {
                   type="email"
                   name="email"
                   value={formData.email || ''}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>National ID</label>
+                <input
+                  type="text"
+                  name="national_id"
+                  value={formData.national_id || ''}
                   onChange={handleChange}
                   className={inputClass}
                 />
@@ -139,13 +207,19 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onSuccess }) => {
               </div>
               <div>
                 <label className={labelClass}>Department</label>
-                <input
-                  type="text"
+                <select
                   name="department"
                   value={formData.department || ''}
                   onChange={handleChange}
                   className={inputClass}
-                />
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Position</label>
@@ -158,15 +232,37 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onSuccess }) => {
                 />
               </div>
               <div>
+                <label className={labelClass}>Employment Type</label>
+                <input
+                  type="text"
+                  name="employment_type"
+                  value={formData.employment_type || ''}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Branch</label>
+                <input
+                  type="text"
+                  name="branch"
+                  value={formData.branch || ''}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
                 <label className={labelClass}>Role *</label>
                 <select
                   name="role"
-                  value={formData.role || 'staff'}
+                  value={formData.role || 'employee'}
                   onChange={handleChange}
                   required
                   className={inputClass}
                 >
-                  <option value="staff">Staff</option>
+                  <option value="employee">Employee</option>
+                  <option value="supervisor">Supervisor</option>
+                  <option value="hr">HR</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
                 </select>
@@ -189,6 +285,62 @@ const EditEmployeeModal = ({ isOpen, onClose, employee, onSuccess }) => {
                   value={formData.salary || ''}
                   onChange={handleChange}
                   step="0.01"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Identity & Work Documents</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Passport Number</label>
+                <input
+                  type="text"
+                  name="passport_number"
+                  value={formData.passport_number || ''}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Work Permit Number</label>
+                <input
+                  type="text"
+                  name="work_permit_number"
+                  value={formData.work_permit_number || ''}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Work Permit Expiry</label>
+                <input
+                  type="date"
+                  name="work_permit_expiry"
+                  value={formData.work_permit_expiry || ''}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Nationality</label>
+                <input
+                  type="text"
+                  name="nationality"
+                  value={formData.nationality || ''}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelClass}>Photo URL</label>
+                <input
+                  type="text"
+                  name="photo_url"
+                  value={formData.photo_url || ''}
+                  onChange={handleChange}
                   className={inputClass}
                 />
               </div>

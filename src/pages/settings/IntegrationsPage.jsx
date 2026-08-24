@@ -14,6 +14,7 @@ import PermissionGuard from '@/components/PermissionGuard';
 import { integrationService } from '@/services/integrations';
 import { useApi } from '@/hooks/useApi';
 import { useToast } from '@/components/ui/use-toast';
+import AccessDenied from '@/components/AccessDenied';
 
 const IntegrationsPage = () => {
   const { t } = useTranslation();
@@ -99,7 +100,7 @@ const IntegrationsPage = () => {
     }, 1500);
   };
 
-  if (!canView('integrations')) return <div className="p-8 text-center">Access Denied</div>;
+  if (!canView('integrations')) return <AccessDenied />;
 
   return (
     <>

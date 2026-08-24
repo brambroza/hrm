@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { formatThaiDateTime } from '@/utils/helpers';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
@@ -104,7 +105,7 @@ const EditTranslationModal = ({ isOpen, onClose, translation, onSuccess }) => {
           </DialogTitle>
           {translation?.updated_at && (
             <p className="text-xs text-slate-400">
-              {t('translate.lastModified')}: {new Date(translation.updated_at).toLocaleString()}
+              {t('translate.lastModified')}: {formatThaiDateTime(translation.updated_at)}
             </p>
           )}
         </DialogHeader>

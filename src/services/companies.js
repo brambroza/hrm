@@ -2,20 +2,24 @@
 import { supabase } from '@/lib/customSupabaseClient';
 
 export const companyService = {
-  getCompany: async () => {
+  getCompany: async (organizationId) => {
+    if (!organizationId) {
+      throw new Error('Organization ID is required');
+    }
     const { data, error } = await supabase
       .from('organizations')
       .select('*')
+      .eq('id', organizationId)
       .limit(1)
       .single();
     if (error) throw error;
     return data;
   },
 
-  updateCompany: async ({ id, ...updates }) => {
+  updateCompany: async ({ id, organizationId, ...updates }) => {
     // If no ID provided, try to find existing first
     if (!id) {
-       const existing = await companyService.getCompany();
+       const existing = await companyService.getCompany(organizationId);
        if (existing) id = existing.id;
     }
 
@@ -27,6 +31,9 @@ export const companyService = {
         .eq('id', id)
         .select();
     } else {
+      if (organizationId) {
+        updates.id = organizationId;
+      }
       result = await supabase
         .from('organizations')
         .insert([updates])

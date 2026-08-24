@@ -9,21 +9,26 @@ import AddEmployeeModal from '@/components/AddEmployeeModal';
 import EditEmployeeModal from '@/components/EditEmployeeModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import PermissionGuard from '@/components/PermissionGuard';
-import { exportToExcel } from '@/utils/helpers';
+import { exportToExcel, logAuditTrail } from '@/utils/helpers';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '@/hooks/usePermission';
+import { useAuth } from '@/contexts/AuthContext';
+import { departmentService } from '@/services/departments';
+import AccessDenied from '@/components/AccessDenied';
 
 const EmployeeListPage = () => {
   const { t } = useTranslation();
   const { canView } = usePermission();
+  const { user } = useAuth();
 
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterDepartment, setFilterDepartment] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -31,6 +36,7 @@ const EmployeeListPage = () => {
   // Confirmation Modal State
   const [deleteId, setDeleteId] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [departments, setDepartments] = useState([]);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -38,6 +44,7 @@ const EmployeeListPage = () => {
   useEffect(() => {
     if (canView('employee')) {
       fetchEmployees();
+      fetchDepartments();
     } else {
       setLoading(false);
     }
@@ -45,7 +52,7 @@ const EmployeeListPage = () => {
 
   useEffect(() => {
     filterData();
-  }, [searchTerm, filterStatus, employees]);
+  }, [searchTerm, filterStatus, filterDepartment, employees]);
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -66,6 +73,15 @@ const EmployeeListPage = () => {
     setLoading(false);
   };
 
+  const fetchDepartments = async () => {
+    try {
+      const data = await departmentService.getDepartments();
+      setDepartments(data || []);
+    } catch (error) {
+      console.error('Failed to load departments:', error);
+    }
+  };
+
   const filterData = () => {
     let filtered = employees;
 
@@ -73,8 +89,14 @@ const EmployeeListPage = () => {
       filtered = filtered.filter(e => e.status === filterStatus);
     }
 
+    if (filterDepartment !== 'all') {
+      filtered = filtered.filter(e => e.department === filterDepartment);
+    }
+
     if (searchTerm) {
       filtered = filtered.filter(e =>
+        e.name_th?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.name_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.employee_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.department?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -92,6 +114,8 @@ const EmployeeListPage = () => {
   const handleDelete = async () => {
     if (!deleteId) return;
 
+    const oldEmployee = employees.find(emp => emp.id === deleteId) || null;
+
     const { error } = await supabase
       .from('employees')
       .update({ status: 'resigned' })
@@ -104,6 +128,16 @@ const EmployeeListPage = () => {
         description: 'Failed to delete employee'
       });
     } else {
+      if (oldEmployee) {
+        await logAuditTrail(
+          user?.id || null,
+          'UPDATE',
+          'employees',
+          deleteId,
+          oldEmployee,
+          { ...oldEmployee, status: 'resigned' }
+        );
+      }
       toast({
         title: t('common.success'),
         description: 'Employee marked as resigned'
@@ -116,7 +150,7 @@ const EmployeeListPage = () => {
   const handleExport = () => {
     const exportData = filteredEmployees.map(e => ({
       [t('employees.employeeId')]: e.employee_id,
-      [t('employees.name')]: e.name,
+      [t('employees.name')]: e.name_th || e.name_en || e.name,
       [t('employees.position')]: e.position,
       [t('employees.department')]: e.department,
       [t('common.status')]: e.status,
@@ -126,12 +160,7 @@ const EmployeeListPage = () => {
   };
 
   if (!canView('employee')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h2>
-        <p className="text-slate-500">You do not have permission to view employees.</p>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
   if (loading) {
@@ -184,6 +213,18 @@ const EmployeeListPage = () => {
             <option value="resigned">Resigned</option>
             <option value="terminated">Terminated</option>
           </select>
+          <select
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Departments</option>
+            {departments.map((dept) => (
+              <option key={dept.id} value={dept.name}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
           <PermissionGuard permission="employee" action="export">
             <Button onClick={handleExport} variant="outline" className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
               <Download className="w-4 h-4 mr-2" />
@@ -195,7 +236,7 @@ const EmployeeListPage = () => {
         {/* Table */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[720px]">
               <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">{t('employees.employeeId')}</th>
@@ -215,7 +256,7 @@ const EmployeeListPage = () => {
                     className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-white font-medium">{employee.employee_id}</td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{employee.name}</td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{employee.name_th || employee.name_en || employee.name}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{employee.position}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{employee.department}</td>
                     <td className="px-6 py-4 text-sm">

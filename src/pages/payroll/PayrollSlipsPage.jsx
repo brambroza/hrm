@@ -166,7 +166,7 @@ const PayrollSlipsPage = () => {
               </div>
 
               <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-                  <table className="w-full text-sm text-left">
+                  <table className="w-full min-w-[720px] text-sm text-left">
                       <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase text-xs font-semibold">
                           <tr>
                               <th className="px-6 py-4">Employee</th>

@@ -19,14 +19,76 @@
 begin;
 
 -- -----------------------------------------------------------------------------
--- 1. Complete the permission catalogue.
+-- 1. The permission catalogue.
 --
---    0002 gates deletes on <module>.delete and inserts on <module>.add. Where
---    the catalogue had no such row the action was permanently denied, including
---    for admins.
+--    This is the full list, not just the additions. The catalogue used to live
+--    only in seed.sql, which is no longer run on a new database — leaving it
+--    there meant a freshly created database ended up with an almost empty
+--    catalogue, and the role templates below silently granted nothing because
+--    they join against it.
+--
+--    The last five rows are new: 0002 gates deletes on <module>.delete and
+--    inserts on <module>.add, and where the catalogue had no such row the
+--    action was permanently denied, admins included.
 -- -----------------------------------------------------------------------------
 
 insert into permissions (module, name, description) values
+  ('dashboard', 'view', 'View dashboard'),
+  ('settings', 'view', 'View settings'),
+  ('employee', 'view', 'View employees'),
+  ('employee', 'add', 'Add employees'),
+  ('employee', 'edit', 'Edit employees'),
+  ('employee', 'delete', 'Deactivate employees'),
+  ('employee', 'export', 'Export employees'),
+  ('time_attendance', 'view', 'View attendance'),
+  ('time_attendance', 'add', 'Add attendance'),
+  ('time_attendance', 'edit', 'Edit attendance'),
+  ('time_attendance', 'delete', 'Delete attendance'),
+  ('time_attendance', 'export', 'Export attendance'),
+  ('time_attendance', 'calculate', 'Calculate attendance'),
+  ('attendance_policy', 'view', 'View attendance policy'),
+  ('attendance_policy', 'edit', 'Edit attendance policy'),
+  ('ot_request', 'view', 'View OT requests'),
+  ('ot_request', 'add', 'Add OT requests'),
+  ('ot_request', 'edit', 'Approve OT requests'),
+  ('leave', 'view', 'View leave'),
+  ('leave', 'add', 'Add leave'),
+  ('leave', 'edit', 'Edit leave'),
+  ('department', 'view', 'View departments'),
+  ('department', 'add', 'Add departments'),
+  ('department', 'edit', 'Edit departments'),
+  ('department', 'delete', 'Delete departments'),
+  ('reports', 'view', 'View reports'),
+  ('reports', 'export', 'Export reports'),
+  ('payroll', 'view', 'View payroll'),
+  ('payroll', 'add', 'Add payroll'),
+  ('payroll', 'edit', 'Edit payroll'),
+  ('payroll', 'delete', 'Delete payroll'),
+  ('payroll', 'export', 'Export payroll'),
+  ('payroll', 'calculate', 'Calculate payroll'),
+  ('user_management', 'view', 'View users'),
+  ('user_management', 'add', 'Add users'),
+  ('user_management', 'edit', 'Edit users'),
+  ('user_management', 'delete', 'Delete users'),
+  ('audit_log', 'view', 'View audit logs'),
+  ('audit_log', 'export', 'Export audit logs'),
+  ('translate', 'view', 'View translations'),
+  ('translate', 'add', 'Add translations'),
+  ('translate', 'edit', 'Edit translations'),
+  ('translate', 'delete', 'Delete translations'),
+  ('system_settings', 'view', 'View system settings'),
+  ('system_settings', 'edit', 'Edit system settings'),
+  ('backup_recovery', 'view', 'View backups'),
+  ('backup_recovery', 'add', 'Create backups'),
+  ('backup_recovery', 'edit', 'Edit backups'),
+  ('backup_recovery', 'delete', 'Delete backups'),
+  ('integrations', 'view', 'View integrations'),
+  ('integrations', 'add', 'Add integrations'),
+  ('integrations', 'edit', 'Edit integrations'),
+  ('integrations', 'delete', 'Delete integrations'),
+  ('company_settings', 'view', 'View company settings'),
+  ('company_settings', 'edit', 'Edit company settings'),
+  -- Added for the policies in 0002.
   ('leave',             'delete', 'Delete leave requests'),
   ('ot_request',        'delete', 'Delete OT requests'),
   ('attendance_policy', 'add',    'Add attendance policy'),

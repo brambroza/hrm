@@ -73,9 +73,18 @@ begin
   insert into payroll_periods (organization_id, name, start_date, end_date)
   values (org_b, 'Jan B', '2026-01-01', '2026-01-31') returning id into period_b;
 
-  insert into payroll_calculations (organization_id, employee_id, payroll_period_id, basic_salary, net_salary)
-  values (org_a, emp_a, period_a, 30000, 28500),
-         (org_b, emp_b, period_b, 90000, 84000);
+  -- payroll_period_id is absent in databases that drifted from schema.sql, so
+  -- the link is only populated where the column exists. The isolation checks
+  -- below still run either way, because they key off organization_id.
+  if _has_column('payroll_calculations', 'payroll_period_id') then
+    insert into payroll_calculations (organization_id, employee_id, payroll_period_id, basic_salary, net_salary)
+    values (org_a, emp_a, period_a, 30000, 28500),
+           (org_b, emp_b, period_b, 90000, 84000);
+  else
+    insert into payroll_calculations (organization_id, employee_id, basic_salary, net_salary)
+    values (org_a, emp_a, 30000, 28500),
+           (org_b, emp_b, 90000, 84000);
+  end if;
 
   insert into leaves (organization_id, employee_id, leave_type, start_date, end_date)
   values (org_a, emp_a, 'annual', '2026-02-02', '2026-02-03'),
@@ -87,6 +96,9 @@ begin
 
   create temp table test_ctx (org_a uuid, org_b uuid, emp_a uuid, emp_b uuid, user_a uuid, user_b uuid);
   insert into test_ctx values (org_a, org_b, emp_a, emp_b, user_a, user_b);
+  -- The assertions below run as `authenticated`, which does not own this temp
+  -- table and would otherwise be refused before reaching any policy check.
+  grant select on test_ctx to public;
 end $$;
 
 -- -----------------------------------------------------------------------------

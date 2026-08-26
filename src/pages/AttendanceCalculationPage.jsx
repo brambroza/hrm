@@ -420,7 +420,7 @@ const calculateDaily = ({ log, date, employee, shift, policy, holiday, leave, ot
     const workMinutes = Math.max(0, diff - breakMinutes);
     workHours = (workMinutes / 60).toFixed(2);
   }
-
+  
   if (shift && (log?.check_in || log?.check_in_morning)) {
     const start = buildShiftDateTime(date, shift.start_time);
     const checkInTime = log?.check_in_morning ? new Date(log.check_in_morning) : new Date(log.check_in);

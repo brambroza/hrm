@@ -101,3 +101,9 @@ missing columns are restored and the drift report comes back empty.
 Expected state afterwards: RLS enabled on all 29 public tables, 102 policies in
 `public` plus 4 in `storage`, a 60-row permission catalogue, and per tenant
 admin 60 grants, hr 44, manager 35, supervisor 15, employee 1.
+
+## Leads (0005)
+
+`0005_leads.sql` adds `public.leads` for the call-back form at `/register`.
+The table is insert-only for `anon`/`authenticated`; review submissions in the
+Supabase dashboard (Table Editor → leads) or with `service_role`.

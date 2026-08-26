@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
+import RegisterInterestPage from '@/pages/RegisterInterestPage';
 import MainLayout from '@/components/MainLayout';
 import DashboardPage from '@/pages/DashboardPage';
 import EmployeeListPage from '@/pages/EmployeeListPage';
@@ -42,6 +43,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<LandingPage />} />
+            <Route path="/register" element={<RegisterInterestPage />} />
             
             <Route
               path="/*"

@@ -297,12 +297,12 @@ const LandingPage = () => {
             <Link to="/login" className="hidden text-sm text-slate-600 transition-colors hover:text-slate-900 sm:block">
               เข้าสู่ระบบ
             </Link>
-            <a
-              href="#contact"
+            <Link
+              to="/register"
               className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-slate-900 shadow-sm shadow-emerald-600/20 transition-transform hover:scale-105"
             >
-              ขอเดโม
-            </a>
+              ลงทะเบียน
+            </Link>
           </div>
         </nav>
       </header>
@@ -334,13 +334,13 @@ const LandingPage = () => {
             </p>
 
             <div className="hero-fade mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href="#contact"
+              <Link
+                to="/register"
                 className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-6 py-3.5 font-medium text-white shadow-lg shadow-emerald-600/20 transition-transform hover:scale-105 sm:w-auto"
               >
-                ขอผลคำนวณจากข้อมูลจริง
+                ลงทะเบียนรับการติดต่อกลับ
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </a>
+              </Link>
               <a
                 href="#tour"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:w-auto"
@@ -766,9 +766,15 @@ const LandingPage = () => {
               ทีมงานจะตั้งกฎของคุณลงระบบและคำนวณเงินเดือนให้ดูของจริงภายใน 3 วันทำการ ไม่มีค่าใช้จ่ายและไม่ผูกมัด
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                to="/register"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3.5 font-medium text-slate-900 shadow-lg shadow-emerald-600/20 transition-transform hover:scale-105 sm:w-auto"
+              >
+                ลงทะเบียนรับการติดต่อกลับ <ArrowRight className="h-4 w-4" />
+              </Link>
               <a
                 href="tel:+66866083298"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3.5 font-medium text-slate-900 shadow-lg shadow-emerald-600/20 transition-transform hover:scale-105 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:w-auto"
               >
                 <Phone className="h-4 w-4" /> 086-608-3298
               </a>

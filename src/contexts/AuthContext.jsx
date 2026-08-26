@@ -97,11 +97,13 @@ export const AuthProvider = ({ children }) => {
 
       // 2. Fetch role_id from roles table
       // Use .eq() for proper filtering and maybeSingle() to handle "no role found" gracefully
-      const { data: roleData, error: roleError } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', userRole)
-        .maybeSingle();
+      // Roles are org-scoped (one 'admin' row per tenant), so the lookup must
+      // filter by organization_id — otherwise maybeSingle() fails on multiple rows.
+      let roleQuery = supabase.from('roles').select('id').eq('name', userRole);
+      roleQuery = userData?.organization_id
+        ? roleQuery.eq('organization_id', userData.organization_id)
+        : roleQuery.is('organization_id', null);
+      const { data: roleData, error: roleError } = await roleQuery.maybeSingle();
 
       if (roleError) throw roleError;
 

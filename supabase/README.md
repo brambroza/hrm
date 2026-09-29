@@ -162,3 +162,31 @@ supabase secrets set ALLOWED_ORIGIN=https://your-app-domain
 
 Until it is deployed, the Add User form reports that the service is not
 available. It has not been deployed or run against a Supabase project yet.
+
+### notify-lead
+
+Emails the sales mailbox when someone registers on the site. The form saves
+the registration, then calls the function with the id of the row; the function
+reads the row itself, so it cannot be made to send arbitrary text, and one
+registration produces one email. Needs `migrations/0007_lead_notifications.sql`.
+
+Mail is sent through [Resend](https://resend.com). Before deploying:
+
+1. Create a Resend account and an API key.
+2. Verify the sending domain (for example `goalong.co.th`) in Resend. Without a
+   verified domain Resend only delivers to the address the account was opened
+   with.
+
+```bash
+supabase secrets set RESEND_API_KEY=... \
+  LEAD_NOTIFY_FROM="HRM Suite <noreply@goalong.co.th>" \
+  LEAD_NOTIFY_TO=amnart.gl@gmail.com \
+  ALLOWED_ORIGIN=https://your-app-domain
+supabase functions deploy notify-lead --no-verify-jwt
+```
+
+`--no-verify-jwt` is required: visitors are not signed in. If the function is
+not deployed or the email fails, the registration is still saved in `leads`
+and the visitor still sees the confirmation.
+
+It has not been deployed or run against a Supabase project yet.

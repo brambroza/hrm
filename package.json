@@ -4,8 +4,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite --host :: --port 3000",
-    "build": "node tools/generate-llms.js || true && vite build",
+    "dev": "node tools/build-blog.mjs && vite --host :: --port 3000",
+    "build": "node tools/build-blog.mjs && vite build",
+    "blog": "node tools/build-blog.mjs",
     "preview": "vite preview --host :: --port 3000",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

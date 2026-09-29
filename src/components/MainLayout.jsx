@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +30,6 @@ const MainLayout = () => {
   );
   const { user, signOut, role } = useAuth();
   const { canView, canUseSelfService } = usePermission();
-  const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -352,14 +350,6 @@ const MainLayout = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <LanguageSwitcher />
-              <button 
-                onClick={toggleTheme}
-                className="p-2 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition-colors border border-slate-200 dark:border-slate-700"
-                title={theme === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
-                aria-label={theme === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
-              >
-                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              </button>
               <Link 
                 to="/settings" 
                 className="p-2 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition-colors border border-slate-200 dark:border-slate-700"

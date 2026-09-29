@@ -8,7 +8,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.{js,jsx,ts}'],
+    include: ['src/**/*.test.{js,jsx,ts}', 'tools/**/*.test.mjs', 'plugins/__tests__/*.test.mjs', 'supabase/functions/**/*.test.ts'],
     env: { TZ: 'UTC' },
   },
 });

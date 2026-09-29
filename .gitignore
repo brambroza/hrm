@@ -8,6 +8,13 @@ dist/
 build/
 *.local
 
+# Written by tools/build-blog.mjs on every build. They hold the site address,
+# so a copy built on a laptop would point at localhost.
+public/blog/
+public/sitemap.xml
+public/robots.txt
+public/llms.txt
+
 # Environment variables — never commit these
 .env
 .env.*

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { ArrowLeft, Building2, Check, Loader2, Mail, MapPin, Phone, User, Users } from 'lucide-react';
-import { leadService } from '@/services/leads';
+import { CONTACT } from '@/components/landing/site';
+import { leadMailto, leadService } from '@/services/leads';
 
 const INITIAL = {
   organization_name: '',
@@ -56,7 +57,7 @@ const RegisterInterestPage = () => {
         setErrors(err.fields);
       } else {
         console.error('Lead submit failed:', err);
-        setServerError('ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่ หรือโทร 086-608-3298');
+        setServerError('ระบบบันทึกข้อมูลไม่สำเร็จ ข้อมูลที่กรอกยังอยู่ครบ เลือกส่งทางอีเมลหรือโทรหาเราได้เลย');
       }
     } finally {
       setSubmitting(false);
@@ -168,7 +169,23 @@ const RegisterInterestPage = () => {
                 </div>
 
                 {serverError && (
-                  <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{serverError}</p>
+                  <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
+                    <p>{serverError}</p>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <a
+                        href={leadMailto(form, CONTACT.personalEmail)}
+                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-white px-4 font-medium text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"
+                      >
+                        <Mail className="h-4 w-4" aria-hidden="true" /> ส่งทางอีเมลแทน
+                      </a>
+                      <a
+                        href={CONTACT.phoneHref}
+                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-white px-4 font-medium text-slate-900 ring-1 ring-slate-300 hover:bg-slate-50"
+                      >
+                        <Phone className="h-4 w-4" aria-hidden="true" /> โทร {CONTACT.phoneLabel}
+                      </a>
+                    </div>
+                  </div>
                 )}
 
                 <button
@@ -181,7 +198,7 @@ const RegisterInterestPage = () => {
                 </button>
 
                 <p className="text-center text-xs text-slate-400">
-                  ข้อมูลใช้เพื่อติดต่อกลับเท่านั้น ไม่ส่งต่อบุคคลที่สาม · หรือโทร 086-608-3298
+                  ข้อมูลใช้เพื่อติดต่อกลับเท่านั้น ไม่ส่งต่อบุคคลที่สาม · หรือโทร {CONTACT.phoneLabel}
                 </p>
               </form>
             </>

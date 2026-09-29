@@ -113,9 +113,9 @@ const AttendanceLogTab = () => {
                 <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{log.hours_worked || '-'}</td>
                 <td className="px-6 py-4 text-sm">
                   <span className={`px-2 py-1 rounded-full text-xs ${
-                    log.status === 'normal' ? 'bg-green-500/20 text-green-400' :
-                    log.status === 'late' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-red-500/20 text-red-400'
+                    log.status === 'normal' ? 'bg-green-100 text-green-800' :
+                    log.status === 'late' ? 'bg-amber-100 text-amber-800' :
+                    'bg-red-100 text-red-800'
                   }`}>
                     {log.status}
                   </span>

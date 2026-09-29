@@ -5,6 +5,7 @@ import inlineEditPlugin from './plugins/visual-editor/vite-plugin-react-inline-e
 import editModeDevPlugin from './plugins/visual-editor/vite-plugin-edit-mode.js';
 import iframeRouteRestorationPlugin from './plugins/vite-plugin-iframe-route-restoration.js';
 import selectionModePlugin from './plugins/selection-mode/vite-plugin-selection-mode.js';
+import blogStaticPlugin from './plugins/vite-plugin-blog-static.js';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -237,6 +238,7 @@ export default defineConfig({
 	customLogger: logger,
 	plugins: [
 		...(isDev ? [inlineEditPlugin(), editModeDevPlugin(), iframeRouteRestorationPlugin(), selectionModePlugin()] : []),
+		blogStaticPlugin(),
 		react(),
 		addTransformIndexHtml
 	],

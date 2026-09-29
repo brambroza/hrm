@@ -131,6 +131,8 @@ const InboxScreen = () => {
             <span className="min-w-0 flex-1">
               <span className={`block text-[11px] font-medium ${row.tone}`}>{row.kind}</span>
               <span className="block truncate text-[10px] text-slate-600">{row.found}</span>
+              {/* On a narrow screen there is no room for a third column, so the suggestion moves under the finding. */}
+              <span className="mt-0.5 block text-[10px] text-slate-800 md:hidden">ระบบเสนอ: {row.suggest}</span>
             </span>
             <span className="hidden min-w-0 flex-1 text-[11px] text-slate-800 md:block">{row.suggest}</span>
           </label>

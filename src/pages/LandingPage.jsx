@@ -2,18 +2,17 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { REVEAL_CSS, startReveal } from '@/lib/revealOnScroll';
 import {
   ArrowRight, Check, ChevronDown, Users, Clock, Timer, CalendarDays, Wallet,
   FileBarChart, Building2, ShieldCheck, Sparkles, Phone, Mail, LineChart, Zap,
-  Sliders, TrendingDown, Server, Plus, ShieldQuestion, ListChecks, FileUp, Scale, Minus,
+  Sliders, TrendingDown, Server, Plus, ShieldQuestion, ListChecks, FileUp, Scale, Minus, Menu, MapPin,
 } from 'lucide-react';
 import ProductMock from '@/components/landing/ProductMock';
 import {
   STATS, WEDGES, PAINS, MODULES, FLOW, CORE, RULE_PACKS, EXAMPLE_BUILDS, FAQS, DAILY_STEPS, TOUR, COMPARE,
 } from '@/components/landing/data';
-
-gsap.registerPlugin(ScrollTrigger);
+import { COMPANY, CONTACT, CONTACT_CHANNELS, NAV_LINKS, SITE_NAME, SITE_TAGLINE } from '@/components/landing/site';
 
 /** Icon lookup so module data can stay serialisable. */
 const ICONS = {
@@ -21,28 +20,30 @@ const ICONS = {
   ListChecks, FileUp, Scale,
 };
 
-/** Anchor targets used by the sticky nav. */
-const NAV_LINKS = [
-  { href: '#tour', label: 'ดูหน้าจอ' },
-  { href: '#why', label: 'ต่างยังไง' },
-  { href: '#versus', label: 'เทียบกับระบบเช่าใช้' },
-  { href: '#modules', label: 'ฟีเจอร์' },
-  { href: '#pricing', label: 'ราคา' },
-  { href: '#faq', label: 'คำถามที่พบบ่อย' },
-];
 
 /**
  * Splits a string into per-word spans so GSAP can stagger them without the SplitText plugin.
  * @param {string} text - Text to split.
  * @param {string} [className] - Extra classes applied to every word span.
+ *
+ * Thai stacks marks above the letters (ที่, เครื่อง) and hangs vowels below them
+ * (คุณ, อยู่), well outside a line box this tight. The outer span clips, for the
+ * slide-up entrance, and the gradient paints only inside the inner span's box,
+ * so both would cut those marks off. The inner span is padded to hold them and
+ * the outer span takes the padding back with negative margins, which leaves
+ * the line spacing as it was.
+ *
  * @returns {JSX.Element[]} Word elements ready to animate.
  */
 const splitWords = (text, className = '') =>
   text.split(' ').map((word, i) => (
-    <span key={`${word}-${i}`} className="inline-block overflow-hidden align-bottom">
-      <span className={`hero-word inline-block ${className}`}>{word}&nbsp;</span>
+    <span key={`${word}-${i}`} className="-mb-[0.35em] -mt-[0.3em] inline-block overflow-hidden align-bottom">
+      <span className={`hero-word inline-block pb-[0.35em] pt-[0.3em] ${className}`}>{word}&nbsp;</span>
     </span>
   ));
+
+/** Icons of the contact channels, by the name used in site.js. */
+const CHANNEL_ICONS = { phone: Phone, mail: Mail, pin: MapPin };
 
 /** Section heading with an eyebrow label; animated by the shared reveal trigger. */
 const SectionHead = ({ eyebrow, title, sub, center = true }) => (
@@ -91,114 +92,44 @@ const LandingPage = () => {
   const root = useRef(null);
   const heroMockRef = useRef(null);
   const tourMockRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const [tab, setTab] = useState(TOUR[0].id);
   const activeTour = TOUR.find((item) => item.id === tab) || TOUR[0];
   const [openFaq, setOpenFaq] = useState(0);
 
+  /**
+   * Motion is decoration. Everything on the page is visible without it; the
+   * hero plays once at load, and sections fade in as they are reached.
+   */
   useLayoutEffect(() => {
-    const ctx = gsap.context((self) => {
-      const mm = gsap.matchMedia();
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      /* Reduced motion: show everything, skip movement. */
-      mm.add('(prefers-reduced-motion: reduce)', () => {
-        gsap.set('.hero-word, .reveal, .hero-fade', { opacity: 1, y: 0, clearProps: 'all' });
-      });
+    const ctx = gsap.context(() => {
+      if (reducedMotion) return;
 
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        /* ---- hero entrance ---- */
-        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-        tl.from('.hero-badge', { y: 20, opacity: 0, duration: 0.6 })
-          .from('.hero-word', { yPercent: 115, opacity: 0, duration: 0.9, stagger: 0.045 }, '-=0.3')
-          .from('.hero-fade', { y: 24, opacity: 0, duration: 0.7, stagger: 0.12 }, '-=0.5')
-          .from(heroMockRef.current, { y: 60, opacity: 0, rotateX: 18, duration: 1.1 }, '-=0.6')
-          .from('.hero-orb', { scale: 0.4, opacity: 0, duration: 1.4, stagger: 0.15 }, 0);
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.from('.hero-badge', { y: 20, opacity: 0, duration: 0.6 })
+        .from('.hero-word', { yPercent: 115, opacity: 0, duration: 0.9, stagger: 0.045 }, '-=0.3')
+        .from('.hero-fade', { y: 24, opacity: 0, duration: 0.7, stagger: 0.12 }, '-=0.5')
+        .from(heroMockRef.current, { y: 60, opacity: 0, rotateX: 18, duration: 1.1 }, '-=0.6')
+        .from('.hero-orb', { scale: 0.4, opacity: 0, duration: 1.4, stagger: 0.15 }, 0);
 
-        /* ---- hero mock parallax ---- */
-        gsap.to(heroMockRef.current, {
-          yPercent: 12,
-          scale: 0.94,
-          opacity: 0.65,
-          ease: 'none',
-          scrollTrigger: { trigger: '.hero', start: 'bottom 85%', end: 'bottom top', scrub: true },
-        });
-
-        /* ---- generic reveal ---- */
-        gsap.utils.toArray('.reveal').forEach((el) => {
-          gsap.from(el, {
-            y: 40,
-            opacity: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: el, start: 'top 88%' },
-          });
-        });
-
-        /* ---- staggered card grids ---- */
-        gsap.utils.toArray('.stagger-group').forEach((group) => {
-          gsap.from(group.children, {
-            y: 48,
-            opacity: 0,
-            duration: 0.7,
-            ease: 'power3.out',
-            stagger: 0.08,
-            scrollTrigger: { trigger: group, start: 'top 85%' },
-          });
-        });
-
-        /* ---- animated counters ---- */
-        gsap.utils.toArray('.counter').forEach((el) => {
-          const target = Number(el.dataset.value);
-          const proxy = { v: 0 };
-          // The markup holds the real figure, so it is correct without
-          // animation. Only when motion is allowed does it count up from 0.
-          el.textContent = '0';
-          gsap.to(proxy, {
-            v: target,
-            duration: 1.6,
-            ease: 'power2.out',
-            scrollTrigger: { trigger: el, start: 'top 90%' },
-            onUpdate: () => {
-              el.textContent = target % 1 === 0 ? Math.round(proxy.v).toLocaleString('th-TH') : proxy.v.toFixed(1);
-            },
-          });
-        });
-
-        /* ---- looping keyword marquee ---- */
-        gsap.to('.marquee-track', { xPercent: -50, duration: 26, ease: 'none', repeat: -1 });
-      });
-
-      /* ---- pinned horizontal flow (desktop only) ---- */
-      mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
-        const track = self.selector('.flow-track')[0];
-        const wrap = self.selector('.flow-wrap')[0];
-        if (!track || !wrap) return;
-        const distance = () => track.scrollWidth - wrap.offsetWidth;
-        gsap.to(track, {
-          x: () => -distance(),
-          ease: 'none',
-          scrollTrigger: {
-            trigger: wrap,
-            start: 'top top',
-            end: () => `+=${distance()}`,
-            pin: true,
-            scrub: 0.6,
-            invalidateOnRefresh: true,
-            anticipatePin: 1,
-          },
-        });
-      });
-
-      /* ---- sticky nav background ---- */
-      ScrollTrigger.create({
-        start: 'top -80',
-        onUpdate: (st) => {
-          const nav = self.selector('.site-nav')[0];
-          if (nav) nav.classList.toggle('is-scrolled', st.scroll() > 80);
-        },
-      });
+      gsap.to('.marquee-track', { xPercent: -50, duration: 26, ease: 'none', repeat: -1 });
     }, root);
 
-    return () => ctx.revert();
+    const stopReveal = startReveal(root.current, { reducedMotion });
+
+    /** The menu gets a background once the page has moved under it. */
+    const nav = root.current?.querySelector('.site-nav');
+    const onScroll = () => nav?.classList.toggle('is-scrolled', window.scrollY > 80);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      stopReveal();
+      ctx.revert();
+    };
   }, []);
 
   /** Animates the tour screenshot whenever the active module tab changes. */
@@ -230,6 +161,9 @@ const LandingPage = () => {
             background-size: 64px 64px;
             mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
           }
+          ${REVEAL_CSS}
+          section[id] { scroll-margin-top: 88px; }
+          .mobile-menu summary::-webkit-details-marker { display: none; }
           .text-gradient { background: linear-gradient(120deg,#34d399,#10b981 45%,#5eead4); -webkit-background-clip: text; background-clip: text; color: transparent; }
         `}</style>
       </Helmet>
@@ -241,10 +175,13 @@ const LandingPage = () => {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-300 font-bold text-white">
               H
             </span>
-            <span className="text-lg font-semibold text-slate-900">HRM<span className="text-emerald-600">.</span>Suite</span>
+            <span className="flex flex-col leading-tight">
+              <span className="text-lg font-semibold text-slate-900">HRM<span className="text-emerald-600">.</span>Suite</span>
+              <span className="text-[11px] text-slate-500">{COMPANY.byline}</span>
+            </span>
           </a>
 
-          <div className="hidden items-center gap-7 lg:flex">
+          <div className="hidden items-center gap-5 lg:flex xl:gap-7">
             {NAV_LINKS.map((l) => (
               <a key={l.href} href={l.href} className="text-sm text-slate-500 transition-colors hover:text-slate-900">
                 {l.label}
@@ -252,12 +189,12 @@ const LandingPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <a
-              href="tel:+66866083298"
+              href={CONTACT.phoneHref}
               className="hidden items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-emerald-700 md:flex"
             >
-              <Phone className="h-4 w-4" /> 086-608-3298
+              <Phone className="h-4 w-4" /> {CONTACT.phoneLabel}
             </a>
             <Link to="/login" className="hidden text-sm text-slate-600 transition-colors hover:text-slate-900 sm:block">
               เข้าสู่ระบบ
@@ -268,6 +205,35 @@ const LandingPage = () => {
             >
               ลงทะเบียน
             </Link>
+            {/* On narrow screens the links above are hidden; this holds them.
+                A details element opens without any script, as on the blog. */}
+            <details ref={mobileMenuRef} className="mobile-menu relative lg:hidden">
+              <summary
+                aria-label="เมนู"
+                className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700"
+              >
+                <Menu className="h-5 w-5" aria-hidden="true" />
+              </summary>
+              <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-900/10">
+                {NAV_LINKS.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => mobileMenuRef.current?.removeAttribute('open')}
+                    className="flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+                <div className="my-1 border-t border-slate-100" />
+                <a href={CONTACT.phoneHref} className="flex min-h-[44px] items-center gap-2 rounded-lg px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  <Phone className="h-4 w-4" aria-hidden="true" /> {CONTACT.phoneLabel}
+                </a>
+                <Link to="/login" className="flex min-h-[44px] items-center rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-50">
+                  เข้าสู่ระบบ
+                </Link>
+              </div>
+            </details>
           </div>
         </nav>
       </header>
@@ -286,7 +252,7 @@ const LandingPage = () => {
               สำหรับโรงงานและธุรกิจหลายกะ ที่ต้องการเป็นเจ้าของระบบเอง
             </span>
 
-            <h1 className="mt-6 text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
+            <h1 className="mt-6 text-4xl font-bold leading-[1.3] tracking-tight text-slate-900 [text-wrap:balance] sm:text-6xl sm:leading-[1.3] lg:text-7xl lg:leading-[1.3]">
               {splitWords('ระบบเงินเดือนที่เป็นของคุณ')}
               <br className="hidden sm:block" />
               {splitWords('อยู่ในเครื่องของคุณ', 'text-gradient')}
@@ -417,7 +383,7 @@ const LandingPage = () => {
           {STATS.map((s) => (
             <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
               <div className="flex items-baseline gap-1 text-4xl font-bold text-slate-900">
-                <span className="counter" data-value={s.value}>{s.value.toLocaleString('th-TH')}</span>
+                <span>{s.value.toLocaleString('th-TH')}</span>
                 <span className="text-gradient text-2xl font-semibold">{s.suffix}</span>
               </div>
               <div className="mt-2 text-sm font-medium text-slate-700">{s.label}</div>
@@ -552,30 +518,24 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ---------------- FLOW (pinned horizontal) ---------------- */}
-      <section id="flow" className="flow-wrap relative overflow-hidden py-20 lg:h-screen lg:py-0">
-        <div className="mx-auto flex h-full max-w-7xl flex-col justify-center px-5">
-          <SectionHead
-            center={false}
-            eyebrow="ขั้นตอนของโครงการ"
-            title="ห้าขั้นตอน จากตรวจนับกฎถึงใช้งานจริง"
-          />
-          <div className="flow-track mt-10 flex gap-5 overflow-x-auto pb-4 lg:overflow-visible lg:pb-0">
-            {FLOW.map((f, i) => (
-              <div
-                key={f.step}
-                className="relative w-[78vw] shrink-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-emerald-50/60 p-7 sm:w-[420px] lg:w-[380px]"
-              >
-                <span className="text-5xl font-bold text-emerald-200">{f.step}</span>
-                <h3 className="mt-3 text-xl font-semibold text-slate-900">{f.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-500">{f.desc}</p>
-                {i < FLOW.length - 1 && (
-                  <ArrowRight className="absolute right-5 top-7 h-5 w-5 text-slate-300" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* ---------------- FLOW ---------------- */}
+      <section id="flow" className="mx-auto max-w-7xl px-5 py-20">
+        <SectionHead
+          eyebrow="ขั้นตอนของโครงการ"
+          title="ห้าขั้นตอน จากตรวจนับกฎถึงใช้งานจริง"
+        />
+        <ol className="stagger-group mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {FLOW.map((f) => (
+            <li
+              key={f.step}
+              className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-emerald-50/60 p-6"
+            >
+              <span className="text-4xl font-bold text-emerald-300" aria-hidden="true">{f.step}</span>
+              <h3 className="mt-3 text-lg font-semibold text-slate-900">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.desc}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {/* ---------------- WHY US ---------------- */}
@@ -747,40 +707,101 @@ const LandingPage = () => {
               >
                 ลงทะเบียนรับการติดต่อกลับ <ArrowRight className="h-4 w-4" />
               </Link>
-              <a
-                href="tel:+66866083298"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:w-auto"
-              >
-                <Phone className="h-4 w-4" /> 086-608-3298
-              </a>
-              <a
-                href="mailto:amnart.gl@gmail.com"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:w-auto"
-              >
-                <Mail className="h-4 w-4" /> amnart.gl@gmail.com
-              </a>
             </div>
-            <p className="mt-5 text-xs text-slate-400">
-              โทร 086-608-3298 · อีเมล amnart.gl@gmail.com · ตอบกลับภายใน 2 ชั่วโมงทำการ (จ-ศ 09:00-18:00)
-            </p>
+
+            <div className="mx-auto mt-10 max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm shadow-slate-200/60 sm:p-8">
+              <h3 className="text-lg font-semibold text-slate-900">ข้อมูลติดต่อ</h3>
+              <p className="mt-1 text-sm text-slate-600">{COMPANY.name}</p>
+              <dl className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                {CONTACT_CHANNELS.map((channel) => {
+                  const Icon = CHANNEL_ICONS[channel.icon];
+                  return (
+                    <div key={channel.key} className={`flex items-start gap-3 ${channel.key === 'address' ? 'sm:col-span-2' : ''}`}>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <dt className="text-xs text-slate-500">{channel.label}</dt>
+                        <dd className="break-words text-sm font-medium text-slate-900">
+                          {channel.href ? (
+                            <a
+                              href={channel.href}
+                              className="inline-flex min-h-[28px] items-center underline decoration-slate-300 underline-offset-4 hover:text-emerald-700 hover:decoration-emerald-600"
+                              {...(channel.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                            >
+                              {channel.value}
+                            </a>
+                          ) : (
+                            channel.value
+                          )}
+                        </dd>
+                      </div>
+                    </div>
+                  );
+                })}
+              </dl>
+              <p className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500">
+                ตอบกลับภายใน 2 ชั่วโมงทำการ (จันทร์ถึงศุกร์ 09:00-18:00)
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ---------------- FOOTER ---------------- */}
-      <footer className="border-t border-slate-200 py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 sm:flex-row">
-          <span className="text-sm text-slate-400">© {new Date().getFullYear()} HRM Suite · ระบบเวลาทำงานและเงินเดือนที่เป็นของคุณ</span>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
-            <a href="tel:+66866083298" className="flex items-center gap-1.5 hover:text-emerald-700">
-              <Phone className="h-3.5 w-3.5" /> 086-608-3298
-            </a>
-            <a href="mailto:amnart.gl@gmail.com" className="flex items-center gap-1.5 hover:text-emerald-700">
-              <Mail className="h-3.5 w-3.5" /> amnart.gl@gmail.com
-            </a>
-            <a href="#pricing" className="hover:text-slate-600">ราคา</a>
-            <Link to="/login" className="hover:text-slate-600">เข้าสู่ระบบ</Link>
+      <footer className="border-t border-slate-200 bg-white py-12">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 md:grid-cols-2 lg:grid-cols-4">
+          <div className="lg:col-span-1">
+            <div className="flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-300 font-bold text-white" aria-hidden="true">H</span>
+              <span className="text-lg font-semibold text-slate-900">HRM<span className="text-emerald-600">.</span>Suite</span>
+            </div>
+            <p className="mt-2 text-sm font-medium text-slate-700">{COMPANY.byline}</p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{SITE_TAGLINE}</p>
           </div>
+
+          <div className="lg:col-span-2">
+            <h2 className="text-sm font-semibold text-slate-900">ข้อมูลติดต่อ</h2>
+            <p className="mt-1 text-sm text-slate-600">{COMPANY.name}</p>
+            <ul className="mt-3 space-y-2">
+              {CONTACT_CHANNELS.map((channel) => {
+                const Icon = CHANNEL_ICONS[channel.icon];
+                return (
+                  <li key={channel.key} className="flex items-start gap-2 text-sm text-slate-600">
+                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+                    <span className="min-w-0 break-words">
+                      <span className="text-slate-500">{channel.label}: </span>
+                      {channel.href ? (
+                        <a
+                          href={channel.href}
+                          className="font-medium text-slate-800 hover:text-emerald-700"
+                          {...(channel.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                        >
+                          {channel.value}
+                        </a>
+                      ) : (
+                        <span className="text-slate-800">{channel.value}</span>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <nav aria-label="ลิงก์ท้ายหน้า">
+            <h2 className="text-sm font-semibold text-slate-900">เมนู</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><a href="#tour" className="text-slate-600 hover:text-slate-900">ดูหน้าจอ</a></li>
+              <li><a href="#pricing" className="text-slate-600 hover:text-slate-900">ราคา</a></li>
+              <li><a href="/blog/" className="text-slate-600 hover:text-slate-900">บทความ</a></li>
+              <li><Link to="/register" className="text-slate-600 hover:text-slate-900">ลงทะเบียน</Link></li>
+              <li><Link to="/login" className="text-slate-600 hover:text-slate-900">เข้าสู่ระบบ</Link></li>
+            </ul>
+          </nav>
+        </div>
+        <div className="mx-auto mt-10 max-w-7xl border-t border-slate-100 px-5 pt-6 text-sm text-slate-500">
+          © {new Date().getFullYear()} {SITE_NAME} {COMPANY.byline}
         </div>
       </footer>
     </div>

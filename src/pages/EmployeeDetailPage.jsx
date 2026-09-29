@@ -59,7 +59,7 @@ const EmployeeDetailPage = () => {
   if (!employee) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-400">{t('employees.notFound')}</p>
+        <p className="text-slate-600">{t('employees.notFound')}</p>
         <Button onClick={() => navigate('/employees')} className="mt-4">
           Go Back
         </Button>
@@ -76,34 +76,34 @@ const EmployeeDetailPage = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button onClick={() => navigate('/employees')} variant="ghost" className="text-white hover:bg-slate-800">
+            <Button onClick={() => navigate('/employees')} variant="ghost" className="text-slate-700 hover:bg-slate-100">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-white">{employee.name_th || employee.name}</h1>
-              <p className="text-slate-400">{employee.employee_id}</p>
+              <h1 className="text-3xl font-bold text-slate-900">{employee.name_th || employee.name}</h1>
+              <p className="text-slate-600">{employee.employee_id}</p>
             </div>
           </div>
-          <Button onClick={() => setShowEditModal(true)} className="bg-blue-500 hover:bg-blue-600">
+          <Button onClick={() => setShowEditModal(true)} className="bg-blue-600 hover:bg-blue-700">
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
         </div>
 
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="bg-slate-900 border border-slate-800">
-            <TabsTrigger value="basic" className="data-[state=active]:bg-blue-500">{t('employees.basicInfo')}</TabsTrigger>
-            <TabsTrigger value="employment" className="data-[state=active]:bg-blue-500">{t('employees.employment')}</TabsTrigger>
-            <TabsTrigger value="migrant" className="data-[state=active]:bg-blue-500">{t('employees.migrantDocuments')}</TabsTrigger>
-            <TabsTrigger value="attendance" className="data-[state=active]:bg-blue-500">{t('employees.attendanceHistory')}</TabsTrigger>
+          <TabsList className="bg-slate-100 border border-slate-200">
+            <TabsTrigger value="basic" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">{t('employees.basicInfo')}</TabsTrigger>
+            <TabsTrigger value="employment" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">{t('employees.employment')}</TabsTrigger>
+            <TabsTrigger value="migrant" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">{t('employees.migrantDocuments')}</TabsTrigger>
+            <TabsTrigger value="attendance" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">{t('employees.attendanceHistory')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900 rounded-xl p-6 border border-slate-800"
+              className="bg-white rounded-xl p-6 border border-slate-200"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoItem label="Name (Thai)" value={employee.name_th} />
@@ -122,7 +122,7 @@ const EmployeeDetailPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900 rounded-xl p-6 border border-slate-800"
+              className="bg-white rounded-xl p-6 border border-slate-200"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoItem label="Employee ID" value={employee.employee_id} />
@@ -141,7 +141,7 @@ const EmployeeDetailPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900 rounded-xl p-6 border border-slate-800"
+              className="bg-white rounded-xl p-6 border border-slate-200"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoItem label="Passport Number" value={employee.passport_number} />
@@ -159,35 +159,35 @@ const EmployeeDetailPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden"
+              className="bg-white rounded-xl border border-slate-200 overflow-hidden"
             >
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px]">
-                  <thead className="bg-slate-800">
+                  <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('common.date')}</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('attendanceCalc.checkIn')}</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('attendanceCalc.checkOut')}</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('employees.hours')}</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">{t('common.status')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600">{t('common.date')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600">{t('attendanceCalc.checkIn')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600">{t('attendanceCalc.checkOut')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600">{t('employees.hours')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600">{t('common.status')}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800">
+                  <tbody className="divide-y divide-slate-100">
                     {attendanceHistory.map((att) => (
                       <tr key={att.id}>
-                        <td className="px-6 py-4 text-sm text-white">{formatThaiDate(att.log_date)}</td>
-                        <td className="px-6 py-4 text-sm text-slate-300">
+                        <td className="px-6 py-4 text-sm text-slate-900">{formatThaiDate(att.log_date)}</td>
+                        <td className="px-6 py-4 text-sm text-slate-700">
                           {att.check_in ? formatThaiTime(att.check_in) : '-'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-300">
+                        <td className="px-6 py-4 text-sm text-slate-700">
                           {att.check_out ? formatThaiTime(att.check_out) : '-'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-300">{att.hours_worked || '-'}</td>
+                        <td className="px-6 py-4 text-sm text-slate-700">{att.hours_worked || '-'}</td>
                         <td className="px-6 py-4 text-sm">
                           <span className={`px-2 py-1 rounded-full text-xs ${
-                            att.status === 'normal' ? 'bg-green-500/20 text-green-400' :
-                            att.status === 'late' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-red-500/20 text-red-400'
+                            att.status === 'normal' ? 'bg-green-100 text-green-800' :
+                            att.status === 'late' ? 'bg-amber-100 text-amber-800' :
+                            'bg-red-100 text-red-800'
                           }`}>
                             {att.status}
                           </span>
@@ -198,7 +198,7 @@ const EmployeeDetailPage = () => {
                 </table>
               </div>
               {attendanceHistory.length === 0 && (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-slate-600">
                   No attendance records found
                 </div>
               )}
@@ -221,8 +221,8 @@ const EmployeeDetailPage = () => {
 
 const InfoItem = ({ label, value }) => (
   <div>
-    <p className="text-sm text-slate-400 mb-1">{label}</p>
-    <p className="text-white font-medium">{value || 'N/A'}</p>
+    <p className="text-sm text-slate-600 mb-1">{label}</p>
+    <p className="text-slate-900 font-medium">{value || 'N/A'}</p>
   </div>
 );
 

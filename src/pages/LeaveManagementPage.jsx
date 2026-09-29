@@ -9,11 +9,12 @@ import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/contexts/AuthContext';
 import { ensureSession, formatThaiDate, logAuditTrail } from '@/utils/helpers';
 import AccessDenied from '@/components/AccessDenied';
+import { canDecideRequest, validateLeaveRequest, validateRejection } from '@/lib/requests';
 
 const LeaveManagementPage = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { canView, canAdd } = usePermission();
+  const { canAdd, canEdit, canUseSelfService } = usePermission();
   const { user, role } = useAuth();
 
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,9 @@ const LeaveManagementPage = () => {
   const [employees, setEmployees] = useState([]);
   const [employeeProfile, setEmployeeProfile] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [decision, setDecision] = useState(null); // { leave, action: 'approved' | 'rejected' }
+  const [decisionNote, setDecisionNote] = useState('');
+  const [deciding, setDeciding] = useState(false);
 
   const [formData, setFormData] = useState({
     employee_id: '',
@@ -33,15 +37,19 @@ const LeaveManagementPage = () => {
   });
 
   const canManageAll = role === 'admin' || role === 'hr';
-  const canManageTeam = role === 'supervisor';
+  const canManageTeam = role === 'supervisor' || role === 'manager';
+  const canOpen = canUseSelfService('leave');
+  // Filing for yourself needs no permission; filing for someone else does.
+  const canFile = canAdd('leave') || Boolean(employeeProfile?.id);
+  const canPickEmployee = canAdd('leave') && (canManageAll || canManageTeam);
 
   useEffect(() => {
-    if (!canView('leave')) {
+    if (!canOpen) {
       setLoading(false);
       return;
     }
     loadData();
-  }, [role, user?.id]);
+  }, [role, user?.id, canOpen]);
 
   const loadData = async () => {
     setLoading(true);
@@ -149,16 +157,8 @@ const LeaveManagementPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.start_date || !formData.end_date) {
-      toast({
-        variant: 'destructive',
-        title: t('common.error'),
-        description: t('reports.selectRangeFirst')
-      });
-      return;
-    }
 
-    const targetEmployeeId = canManageAll || canManageTeam
+    const targetEmployeeId = canPickEmployee
       ? formData.employee_id
       : employeeProfile?.id;
 
@@ -172,6 +172,22 @@ const LeaveManagementPage = () => {
     }
 
     try {
+      // Checked against the database, not the list on screen, which a
+      // supervisor's view may have narrowed to their team.
+      const { data: existing, error: existingError } = await supabase
+        .from('leaves')
+        .select('start_date, end_date, status')
+        .eq('employee_id', targetEmployeeId)
+        .lte('start_date', formData.end_date || formData.start_date)
+        .gte('end_date', formData.start_date);
+      if (existingError) throw existingError;
+
+      const problem = validateLeaveRequest(formData, existing || []);
+      if (problem) {
+        toast({ variant: 'destructive', title: t('common.error'), description: t(problem) });
+        return;
+      }
+
       const payload = {
         employee_id: targetEmployeeId,
         leave_type: formData.leave_type,
@@ -224,6 +240,56 @@ const LeaveManagementPage = () => {
     }
   };
 
+  /**
+   * Record an approval or a rejection.
+   * The row is matched on status 'pending' as well as id, so a request that
+   * someone else decided a moment ago is not overwritten.
+   */
+  const handleDecision = async () => {
+    if (!decision) return;
+    const { leave, action } = decision;
+
+    if (action === 'rejected') {
+      const problem = validateRejection(decisionNote);
+      if (problem) {
+        toast({ variant: 'destructive', title: t('common.error'), description: t(problem) });
+        return;
+      }
+    }
+
+    setDeciding(true);
+    try {
+      const changes = {
+        status: action,
+        approved_by: user?.id || null,
+        approved_at: new Date().toISOString(),
+      };
+      // decision_note is added by migration 0006.
+      if (action === 'rejected') changes.decision_note = decisionNote.trim();
+
+      const { data, error } = await supabase
+        .from('leaves')
+        .update(changes)
+        .eq('id', leave.id)
+        .eq('status', 'pending')
+        .select();
+
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error(t('requests.alreadyDecided'));
+
+      await logAuditTrail(user?.id || null, 'UPDATE', 'leaves', leave.id, leave, data[0]);
+
+      toast({ title: t('common.success'), description: t(`leave.status.${action}`) });
+      setDecision(null);
+      setDecisionNote('');
+      loadData();
+    } catch (error) {
+      toast({ variant: 'destructive', title: t('common.error'), description: error.message });
+    } finally {
+      setDeciding(false);
+    }
+  };
+
   const emptyState = useMemo(() => {
     if (!employeeProfile && !canManageAll) {
       return t('leave.noEmployeeProfile');
@@ -242,7 +308,7 @@ const LeaveManagementPage = () => {
     return map;
   }, [employees, employeeProfile]);
 
-  if (!canView('leave')) {
+  if (!canOpen) {
     return <AccessDenied />;
   }
 
@@ -265,7 +331,7 @@ const LeaveManagementPage = () => {
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('leave.title')}</h1>
             <p className="text-slate-500 dark:text-slate-400">{t('leave.subtitle')}</p>
           </div>
-          {canAdd('leave') && (
+          {canFile && (
             <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700">
               {t('leave.newRequest')}
             </Button>
@@ -282,12 +348,13 @@ const LeaveManagementPage = () => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">{t('leave.startDate')}</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">{t('leave.endDate')}</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase">{t('common.status')}</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {leaves.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
+                    <td colSpan={6} className="px-6 py-10 text-center text-slate-500">
                       {emptyState}
                     </td>
                   </tr>
@@ -311,6 +378,23 @@ const LeaveManagementPage = () => {
                           {t(`leave.status.${leave.status || 'pending'}`, leave.status)}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-sm text-right">
+                        {canDecideRequest({
+                          canEdit: canEdit('leave'),
+                          status: leave.status,
+                          requestEmployeeId: leave.employee_id,
+                          deciderEmployeeId: employeeProfile?.id,
+                        }) && (
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => { setDecisionNote(''); setDecision({ leave, action: 'approved' }); }}>
+                              {t('common.approve')}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => { setDecisionNote(''); setDecision({ leave, action: 'rejected' }); }}>
+                              {t('common.reject')}
+                            </Button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -326,7 +410,7 @@ const LeaveManagementPage = () => {
             <DialogTitle>{t('leave.newRequest')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {(canManageAll || canManageTeam) && (
+            {canPickEmployee && (
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">{t('common.employee')} *</label>
                 <select
@@ -381,6 +465,7 @@ const LeaveManagementPage = () => {
                   value={formData.end_date}
                   onChange={handleChange}
                   required
+                  min={formData.start_date || undefined}
                   className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
                 />
               </div>
@@ -425,6 +510,50 @@ const LeaveManagementPage = () => {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={decision !== null} onOpenChange={(open) => { if (!open && !deciding) setDecision(null); }}>
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
+          <DialogHeader>
+            <DialogTitle>
+              {decision?.action === 'rejected' ? t('requests.confirmReject') : t('requests.confirmApprove')}
+            </DialogTitle>
+          </DialogHeader>
+          {decision && (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                {decision.leave.employees?.name || employeeLookup.get(decision.leave.employee_id)?.name || '-'}
+                {' · '}
+                {t(`leave.type.${decision.leave.leave_type}`, decision.leave.leave_type)}
+                {' · '}
+                {formatThaiDate(decision.leave.start_date)} – {formatThaiDate(decision.leave.end_date)}
+              </p>
+              {decision.action === 'rejected' && (
+                <div>
+                  <label htmlFor="decision_note" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                    {t('requests.rejectReason')} *
+                  </label>
+                  <textarea
+                    id="decision_note"
+                    value={decisionNote}
+                    onChange={(e) => setDecisionNote(e.target.value)}
+                    maxLength={500}
+                    rows={3}
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white"
+                  />
+                </div>
+              )}
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" disabled={deciding} onClick={() => setDecision(null)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button type="button" disabled={deciding} onClick={handleDecision} className="bg-blue-600 hover:bg-blue-700">
+                  {decision.action === 'rejected' ? t('common.reject') : t('common.approve')}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

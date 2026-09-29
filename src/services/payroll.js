@@ -1,5 +1,6 @@
 
 import { supabase } from '@/lib/customSupabaseClient';
+import { assertPeriodOpen } from '@/services/payrollPeriods';
 
 export const getPayrollCalculations = async (periodId = null) => {
   console.log('[Service] getPayrollCalculations called with periodId:', periodId);
@@ -85,6 +86,7 @@ export const getPayroll = async (id) => {
 
 export const addPayrollCalculation = async (calcData) => {
   try {
+    await assertPeriodOpen(calcData.payroll_period_id);
     const { data, error } = await supabase
       .from('payroll_calculations')
       .insert([calcData])
@@ -100,6 +102,14 @@ export const addPayrollCalculation = async (calcData) => {
 
 export const updatePayrollCalculation = async (id, updates) => {
   try {
+    const { data: current, error: readError } = await supabase
+      .from('payroll_calculations')
+      .select('payroll_period_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!current) throw new Error('ไม่พบผลการคำนวณนี้');
+    await assertPeriodOpen(current.payroll_period_id);
     const { data, error } = await supabase
       .from('payroll_calculations')
       .update(updates)
@@ -116,6 +126,14 @@ export const updatePayrollCalculation = async (id, updates) => {
 
 export const deletePayrollCalculation = async (id) => {
   try {
+    const { data: current, error: readError } = await supabase
+      .from('payroll_calculations')
+      .select('payroll_period_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!current) throw new Error('ไม่พบผลการคำนวณนี้');
+    await assertPeriodOpen(current.payroll_period_id);
     const { error } = await supabase
       .from('payroll_calculations')
       .delete()

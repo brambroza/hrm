@@ -13,7 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getPayrollPeriods } from '@/services/payrollPeriods';
-import { getPayrollCalculations, calculatePayroll, addPayrollCalculation, deletePayrollCalculation } from '@/services/payroll';
+import { getPayrollCalculations, calculatePayroll, addPayrollCalculation, updatePayrollCalculation, deletePayrollCalculation } from '@/services/payroll';
+import { isPeriodClosed as isClosedStatus, getStatusLabel } from '@/utils/statusValidator';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { supabase } from '@/lib/customSupabaseClient';
 
@@ -101,33 +102,55 @@ const PayrollCalculationPage = () => {
           const existingCalc = calculationsMap[employee.id];
           
           if (existingCalc) {
-              // Should update (not implemented in this simplified flow, but usually yes)
-              // For now, we'll just log
-              console.log("Update calculation for", employee.name);
+              const { employee_id, payroll_period_id, ...figures } = calcResult;
+              const { error } = await updatePayrollCalculation(existingCalc.id, figures);
+              if (error) throw error;
           } else {
               const { error } = await addPayrollCalculation(calcResult);
               if (error) throw error;
           }
-          return true;
+          return { ok: true };
       } catch (err) {
           console.error(`Error calculating for ${employee.name}:`, err);
-          return false;
+          return { ok: false, message: err.message };
       }
+  };
+
+  /**
+   * Tell the user how a batch really went. A batch where every row failed used
+   * to be announced as a success for 0 employees.
+   * @param {Array<{ok: boolean, message?: string}>} results - One entry per employee attempted.
+   * @param {number} skipped - Employees left alone because they were already calculated.
+   */
+  const reportBatch = (results, skipped = 0) => {
+      const done = results.filter(r => r.ok).length;
+      const failed = results.filter(r => !r.ok);
+      const parts = [t('payroll.batchDone', { count: done })];
+      if (skipped > 0) parts.push(t('payroll.batchSkipped', { count: skipped }));
+      if (failed.length > 0) parts.push(t('payroll.batchFailed', { count: failed.length }));
+
+      toast({
+          variant: failed.length > 0 ? 'destructive' : 'default',
+          title: failed.length > 0 ? t('payroll.batchHadErrors') : t('common.success'),
+          description: failed.length > 0 ? `${parts.join(' · ')} — ${failed[0].message}` : parts.join(' · '),
+      });
   };
 
   const handleCalculateAll = async () => {
       if (!selectedPeriod) return;
       setLoading(true);
-      let successCount = 0;
-      
+      const results = [];
+      let skipped = 0;
+
       for (const emp of employees) {
-          if (!calculationsMap[emp.id]) { // Only calculate if not already done (or we could force recalc)
-             const success = await performCalculation(emp);
-             if (success) successCount++;
+          if (calculationsMap[emp.id]) {
+              skipped++;
+          } else {
+              results.push(await performCalculation(emp));
           }
       }
-      
-      toast({ title: "Calculation Complete", description: `Calculated payroll for ${successCount} employees.` });
+
+      reportBatch(results, skipped);
       await fetchEmployeesAndCalculations();
       setLoading(false);
   };
@@ -135,15 +158,14 @@ const PayrollCalculationPage = () => {
   const handleCalculateSelected = async () => {
       if (selectedEmployees.length === 0) return;
       setLoading(true);
-      let successCount = 0;
+      const results = [];
 
       const selectedEmps = employees.filter(e => selectedEmployees.includes(e.id));
       for (const emp of selectedEmps) {
-          const success = await performCalculation(emp);
-          if (success) successCount++;
+          results.push(await performCalculation(emp));
       }
 
-      toast({ title: "Calculation Complete", description: `Calculated payroll for ${successCount} selected employees.` });
+      reportBatch(results);
       await fetchEmployeesAndCalculations();
       setLoading(false);
   };
@@ -187,7 +209,7 @@ const PayrollCalculationPage = () => {
   };
 
   const selectedPeriodObj = periods.find(p => p.id === selectedPeriod);
-  const isPeriodClosed = selectedPeriodObj?.status === 'CLOSED';
+  const isPeriodClosed = isClosedStatus(selectedPeriodObj?.status);
 
   return (
     <div className="space-y-6">
@@ -211,7 +233,7 @@ const PayrollCalculationPage = () => {
                           <SelectTrigger><SelectValue placeholder="Select Period" /></SelectTrigger>
                           <SelectContent>
                               {periods.map(p => (
-                                  <SelectItem key={p.id} value={p.id}>{p.name} ({p.status})</SelectItem>
+                                  <SelectItem key={p.id} value={p.id}>{p.name} ({getStatusLabel(p.status)})</SelectItem>
                               ))}
                           </SelectContent>
                       </Select>
@@ -231,7 +253,7 @@ const PayrollCalculationPage = () => {
               {isPeriodClosed && (
                   <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded flex items-center gap-2">
                       <AlertCircle className="w-5 h-5" />
-                      <span>This payroll period is <strong>CLOSED</strong>. Calculations cannot be modified.</span>
+                      <span>{t('payroll.closedBanner')}</span>
                   </div>
               )}
 
@@ -319,9 +341,6 @@ const PayrollCalculationPage = () => {
                                           <td className="px-4 py-4 text-right space-x-2">
                                               {isCalculated ? (
                                                   <>
-                                                      <Button variant="ghost" size="sm" title="View Details">
-                                                          <Eye className="w-4 h-4 text-blue-600" />
-                                                      </Button>
                                                       {!isPeriodClosed && (
                                                           <Button variant="ghost" size="sm" onClick={() => handleDeleteCalculation(calc.id)} title="Delete Calculation">
                                                               <Trash2 className="w-4 h-4 text-red-500" />
@@ -330,7 +349,7 @@ const PayrollCalculationPage = () => {
                                                   </>
                                               ) : (
                                                   !isPeriodClosed && (
-                                                      <Button variant="ghost" size="sm" onClick={() => performCalculation(emp).then(fetchEmployeesAndCalculations)}>
+                                                      <Button variant="ghost" size="sm" onClick={() => performCalculation(emp).then((result) => { reportBatch([result]); return fetchEmployeesAndCalculations(); })}>
                                                           <Play className="w-4 h-4 text-emerald-600" /> Calculate
                                                       </Button>
                                                   )

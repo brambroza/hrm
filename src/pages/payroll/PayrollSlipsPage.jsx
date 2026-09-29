@@ -12,12 +12,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getPayrollPeriods } from '@/services/payrollPeriods';
-import { getPayrollSlips, sendPayrollSlipEmail } from '@/services/payrollSlips';
+import { getPayrollCalculations } from '@/services/payroll';
+import { companyService } from '@/services/companies';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatBaht } from '@/lib/money';
 import { generatePayrollSlipPdf } from '@/services/payrollPdfService';
 
 const PayrollSlipsPage = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { organizationId } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [periods, setPeriods] = useState([]);
@@ -40,6 +44,7 @@ const PayrollSlipsPage = () => {
             }
         } catch (err) {
             console.error("Error fetching periods:", err);
+            toast({ variant: "destructive", title: t('common.error'), description: err.message });
         }
     };
     loadPeriods();
@@ -51,9 +56,11 @@ const PayrollSlipsPage = () => {
       setError(null);
       console.log("Loading slips for period:", selectedPeriod);
       try {
-          const { data, error } = await getPayrollSlips(selectedPeriod);
+          // A slip is a view of a calculation. Nothing ever wrote to the
+          // payroll_slips table, so reading it always gave an empty list.
+          const { data, error } = await getPayrollCalculations(selectedPeriod);
           if (error) throw error;
-          setSlips(data || []);
+          setSlips((data || []).map((calculation) => ({ id: calculation.id, calculation })));
       } catch (err) {
           console.error("Error fetching slips:", err);
           setError("Failed to load payroll slips.");
@@ -93,27 +100,20 @@ const PayrollSlipsPage = () => {
               position: slip.calculation.employee.position || "N/A"
           };
           
+          // The employer printed on the slip is the organization on record.
+          const company = await companyService.getCompany(organizationId);
           const companyData = {
-              name: "My Company Co., Ltd.",
-              address: "123 Business Rd, Bangkok",
-              phone: "02-123-4567"
+              name: company?.name,
+              address: company?.address,
+              phone: company?.phone,
+              email: company?.email
           };
-          
-          generatePayrollSlipPdf(payrollData, employeeData, companyData);
-          toast({ title: "Success", description: "PDF generated and downloaded." });
+
+          await generatePayrollSlipPdf(payrollData, employeeData, companyData);
+          toast({ title: t('common.success'), description: t('payroll.slipDownloaded') });
       } catch (err) {
           console.error("Error generating PDF:", err);
-          toast({ variant: "destructive", title: "Error", description: "Failed to generate PDF." });
-      }
-  };
-
-  const handleSendEmail = async (slip) => {
-      toast({ title: "Sending...", description: "Email request queued." });
-      try {
-          await sendPayrollSlipEmail(slip.id, "test@example.com"); // Mock
-          toast({ title: "Sent", description: "Slip sent via email." });
-      } catch (err) {
-          toast({ variant: "destructive", title: "Error", description: "Failed to send email." });
+          toast({ variant: "destructive", title: t('common.error'), description: err.message });
       }
   };
 
@@ -212,17 +212,14 @@ const PayrollSlipsPage = () => {
                                       </td>
                                       <td className="px-6 py-4">{slip.calculation?.period?.name || '-'}</td>
                                       <td className="px-6 py-4 text-right font-bold text-emerald-600">
-                                          {slip.calculation?.net_salary ? parseFloat(slip.calculation.net_salary).toLocaleString() : '0.00'}
+                                          {formatBaht(slip.calculation?.net_salary)}
                                       </td>
                                       <td className="px-6 py-4 text-center">
-                                          <Badge className="bg-green-100 text-green-800 border-green-200">Generated</Badge>
+                                          <Badge className="bg-green-100 text-green-800 border-green-200">{t('payroll.calculated')}</Badge>
                                       </td>
                                       <td className="px-6 py-4 text-right space-x-2">
                                           <Button variant="ghost" size="sm" onClick={() => handleGeneratePdf(slip)} title="Download PDF">
                                               <Download className="w-4 h-4 text-slate-600" />
-                                          </Button>
-                                          <Button variant="ghost" size="sm" onClick={() => handleSendEmail(slip)} title="Send Email">
-                                              <Send className="w-4 h-4 text-blue-600" />
                                           </Button>
                                       </td>
                                   </tr>

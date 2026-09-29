@@ -8,6 +8,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/contexts/AuthContext';
 import { ensureSession, logAuditTrail } from '@/utils/helpers';
 import AccessDenied from '@/components/AccessDenied';
+import SetupHint from '@/components/SetupHint';
 
 const defaultPolicy = {
   name: 'Default Policy',
@@ -159,6 +160,7 @@ const AttendancePolicyPage = () => {
         <meta name="description" content="Attendance policy configuration" />
       </Helmet>
       <div className="space-y-6">
+        <SetupHint />
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('attendancePolicy.title')}</h1>
           <p className="text-slate-500 dark:text-slate-400">{t('attendancePolicy.subtitle')}</p>

@@ -30,7 +30,7 @@ const MainLayout = () => {
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true,
   );
   const { user, signOut, role } = useAuth();
-  const { canView } = usePermission();
+  const { canView, canUseSelfService } = usePermission();
   const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
   const location = useLocation();
@@ -119,13 +119,15 @@ const MainLayout = () => {
       icon: Clock,
       label: t('attendance.otRequest'),
       path: '/ot-requests',
-      permission: 'ot_request'
+      permission: 'ot_request',
+      selfService: true
     },
     {
       icon: CalendarOff,
       label: t('common.leave'),
       path: '/leave',
-      permission: 'leave'
+      permission: 'leave',
+      selfService: true
     },
     { 
       icon: DollarSign, 
@@ -153,12 +155,11 @@ const MainLayout = () => {
           permission: 'settings',
           children: [
             { label: t('settings.settings'), path: '/settings', permission: 'settings' },
+            { label: t('setup.title'), path: '/settings/setup', permission: 'system_settings' },
             { label: t('settings.companySettings'), path: '/settings/company', permission: 'company_settings' },
             { label: t('settings.departmentManagement'), path: '/settings/departments', permission: 'department' },
             { label: t('settings.attendancePolicy'), path: '/settings/attendance-policy', permission: 'attendance_policy' },
             { label: t('settings.systemConfig'), path: '/settings/system', permission: 'system_settings' },
-            { label: t('settings.integrations'), path: '/settings/integrations', permission: 'integrations' },
-            { label: t('settings.backupRecovery'), path: '/settings/backup', permission: 'backup_recovery' },
         { label: t('settings.auditLog'), path: '/settings/audit-log', permission: 'audit_log' },
         { label: t('settings.userManagement'), path: '/settings/users', permission: 'user_management' },
         { label: t('settings.manageTranslations'), path: '/settings/translate', permission: 'translate' },
@@ -242,7 +243,7 @@ const MainLayout = () => {
             {/* Navigation */}
             <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
               {menuItems.map((item) => {
-                if (item.permission && !canView(item.permission)) return null;
+                if (item.permission && !(item.selfService ? canUseSelfService(item.permission) : canView(item.permission))) return null;
 
                 const Icon = item.icon;
                 const hasChildren = item.children && item.children.length > 0;

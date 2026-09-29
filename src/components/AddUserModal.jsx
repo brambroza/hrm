@@ -1,3 +1,4 @@
+import { USER_ROLES, DEFAULT_ROLE } from '@/lib/roles';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/customSupabaseClient';
@@ -24,7 +25,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     full_name: '',
     email: '',
     password: '',
-    role: 'Employee',
+    role: DEFAULT_ROLE,
     status: 'active',
     employee_id: ''
   });
@@ -43,7 +44,10 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
     const { data } = await supabase
       .from('employees')
       .select('id, name, employee_id')
-      .eq('status', 'active');
+      .eq('status', 'active')
+      // Someone who already has a login must not be offered again.
+      .is('user_id', null)
+      .order('employee_id');
     setEmployees(data || []);
   };
 
@@ -63,7 +67,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (formData.password.length < 8) {
       toast({
         variant: 'destructive',
         title: t('validation.passwordMin'),
@@ -81,7 +85,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         full_name: '',
         email: '',
         password: '',
-        role: 'Employee',
+        role: DEFAULT_ROLE,
         status: 'active',
         employee_id: ''
       });
@@ -159,11 +163,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   <SelectValue placeholder={t('userManagement.role')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Admin">{t('roles.Admin')}</SelectItem>
-                  <SelectItem value="Manager">{t('roles.Manager')}</SelectItem>
-                  <SelectItem value="HR">{t('roles.HR')}</SelectItem>
-                  <SelectItem value="Accountant">{t('roles.Accountant')}</SelectItem>
-                  <SelectItem value="Employee">{t('roles.Employee')}</SelectItem>
+                  {USER_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>{t(`roles.${role}`)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

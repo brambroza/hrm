@@ -129,16 +129,16 @@ const PayrollReportsPage = () => {
     }
   };
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
     if (!reportData) return;
     setGenerating(true);
     try {
         const periodName = periods.find(p => p.id === selectedPeriodId)?.name || 'Unknown Period';
-        generatePayrollReportPdf(reportData, periodName);
+        await generatePayrollReportPdf(reportData, periodName);
         toast({ title: "Success", description: "Report downloaded successfully" });
     } catch (err) {
         console.error("Export PDF Error:", err);
-        toast({ variant: "destructive", title: "Error", description: "Failed to export PDF" });
+        toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
         setGenerating(false);
     }

@@ -5,7 +5,8 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Download, Search } from 'lucide-react';
-import { exportToExcel, calculateHoursWorked, formatThaiTime, getThaiISODate } from '@/utils/helpers';
+import { exportToExcel, formatThaiTime, getThaiISODate } from '@/utils/helpers';
+import { hoursBetween, toShiftPunchTimestamp } from '@/lib/thaiTime';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const AttendanceLogTab = () => {
@@ -153,22 +154,32 @@ const ManualEntryModal = ({ isOpen, onClose, employees, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const checkInTime = formData.check_in ? `${formData.log_date}T${formData.check_in}:00` : null;
-      const checkOutTime = formData.check_out ? `${formData.log_date}T${formData.check_out}:00` : null;
-      const checkInMorning = formData.check_in_morning ? `${formData.log_date}T${formData.check_in_morning}:00` : null;
-      const checkOutMorning = formData.check_out_morning ? `${formData.log_date}T${formData.check_out_morning}:00` : null;
-      const checkInAfternoon = formData.check_in_afternoon ? `${formData.log_date}T${formData.check_in_afternoon}:00` : null;
-      const checkOutAfternoon = formData.check_out_afternoon ? `${formData.log_date}T${formData.check_out_afternoon}:00` : null;
-      const otIn = formData.ot_in ? `${formData.log_date}T${formData.ot_in}:00` : null;
-      const otOut = formData.ot_out ? `${formData.log_date}T${formData.ot_out}:00` : null;
-      
-      const hoursWorked = checkInTime && checkOutTime ? calculateHoursWorked(checkInTime, checkOutTime) : null;
+      // The first punch of the day anchors the shift; any later field with an
+      // earlier clock time happened after midnight and is dated the next day.
+      const firstPunch = formData.check_in || formData.check_in_morning;
+      if (!firstPunch && !formData.check_out && !formData.check_out_afternoon) {
+        throw new Error(t('attendance.enterAtLeastOneTime'));
+      }
+      const stamp = (time) =>
+        time ? toShiftPunchTimestamp(formData.log_date, time, firstPunch || time) : null;
+
+      const checkInTime = stamp(formData.check_in);
+      const checkOutTime = stamp(formData.check_out);
+      const checkInMorning = stamp(formData.check_in_morning);
+      const checkOutMorning = stamp(formData.check_out_morning);
+      const checkInAfternoon = stamp(formData.check_in_afternoon);
+      const checkOutAfternoon = stamp(formData.check_out_afternoon);
+      const otIn = stamp(formData.ot_in);
+      const otOut = stamp(formData.ot_out);
+
+      const hoursWorked = checkInTime && checkOutTime ? hoursBetween(checkInTime, checkOutTime) : null;
 
       const { error } = await supabase
         .from('attendance_logs')

@@ -232,7 +232,6 @@ const AddPayrollPeriodModal = ({ isOpen, onClose, onSuccess }) => {
                     <SelectContent>
                         <SelectItem value={VALID_STATUSES.DRAFT}>ร่าง (Draft)</SelectItem>
                         <SelectItem value={VALID_STATUSES.OPEN}>เปิดใช้งาน (Open)</SelectItem>
-                        <SelectItem value={VALID_STATUSES.CLOSED}>ปิด (Closed)</SelectItem>
                     </SelectContent>
                 </Select>
                 {formErrors.status && <p className="text-xs text-red-500">{formErrors.status}</p>}

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Users, Settings as SettingsIcon, Database, Link as LinkIcon, FileText, Globe, Clock, LayoutGrid } from 'lucide-react';
+import { ListChecks, Building2, Users, Settings as SettingsIcon, Database, Link as LinkIcon, FileText, Globe, Clock, LayoutGrid } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,14 @@ const SettingsPage = () => {
   const { canView } = usePermission();
   
   const settingsSections = [
+    {
+      icon: ListChecks,
+      title: t('setup.title'),
+      description: t('setup.cardDescription'),
+      path: '/settings/setup',
+      color: 'bg-emerald-100 text-emerald-700',
+      permission: 'system_settings'
+    },
     {
       icon: Building2,
       title: t('settings.companySettings'),
@@ -47,14 +55,6 @@ const SettingsPage = () => {
       permission: 'attendance_policy'
     },
     {
-      icon: LinkIcon,
-      title: t('settings.integrations'),
-      description: 'Manage external integrations (ZKTeco, Email, SMS)',
-      path: '/settings/integrations',
-      color: 'bg-green-100 text-green-600',
-      permission: 'integrations'
-    },
-    {
       icon: Users,
       title: t('settings.userManagement'),
       description: 'Manage user accounts, roles, and permissions (RBAC)',
@@ -69,14 +69,6 @@ const SettingsPage = () => {
       path: '/settings/translate',
       color: 'bg-teal-100 text-teal-600',
       permission: 'translate'
-    },
-    {
-      icon: Database,
-      title: t('settings.backupRecovery'),
-      description: 'System backup and data recovery options',
-      path: '/settings/backup',
-      color: 'bg-indigo-100 text-indigo-600',
-      permission: 'backup_recovery'
     },
     {
       icon: FileText,

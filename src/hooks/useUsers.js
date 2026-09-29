@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from 'react-i18next';
 import { logAuditTrail } from '@/utils/helpers';
 import { useAuth } from '@/contexts/AuthContext';
+import { isUserRole } from '@/lib/roles';
 
 export const useUsers = () => {
   const [users, setUsers] = useState([]);
@@ -40,41 +41,40 @@ export const useUsers = () => {
   const addUser = async (userData) => {
     setLoading(true);
     try {
-      const { employee_id, ...userPayload } = userData;
+      if (!isUserRole(userData.role)) throw new Error(t('userManagement.invalidRole'));
 
-      // Use maybeSingle() to handle potential empty returns safely, though insert usually returns data
-      const { data, error } = await supabase
-        .from('users')
-        .insert([userPayload])
-        .select()
-        .maybeSingle();
+      // A login can only be created with the service role key, which must
+      // never reach the browser. The create-user Edge Function does it, checks
+      // the caller's permission, and writes the audit row. The password goes
+      // to Supabase Auth only; it is never stored in an application table.
+      const { data: result, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          full_name: userData.full_name,
+          email: userData.email,
+          password: userData.password,
+          role: userData.role,
+          status: userData.status,
+          employee_id: userData.employee_id && userData.employee_id !== 'none' ? userData.employee_id : null,
+        },
+      });
 
-      if (error) throw error;
-      if (!data) throw new Error('Failed to create user: No data returned');
-
-      if (employee_id && employee_id !== 'none') {
-        const { error: linkError } = await supabase
-          .from('employees')
-          .update({ user_id: data.id })
-          .eq('id', employee_id);
-          
-        if (linkError) {
-          console.error('Error linking employee:', linkError);
-        }
+      if (error) {
+        // The function's own message is in the response body, not in error.message.
+        let message = t('userManagement.createUnavailable');
+        try {
+          const body = await error.context?.json?.();
+          if (body?.error) message = body.error;
+        } catch (_) { /* keep the default message */ }
+        throw new Error(message);
       }
+      if (!result?.user) throw new Error(t('userManagement.createUnavailable'));
 
-      await logAuditTrail(
-        currentUser.id,
-        'INSERT',
-        'users',
-        data.id,
-        null,
-        data
-      );
+      const data = result.user;
 
       toast({
-        title: t('common.success'),
-        description: t('userManagement.userCreated')
+        variant: result.warning ? 'destructive' : 'default',
+        title: result.warning ? t('common.warning') : t('common.success'),
+        description: result.warning || t('userManagement.userCreated')
       });
       
       fetchUsers();
@@ -107,7 +107,10 @@ export const useUsers = () => {
       if (!oldUser) throw new Error('User not found');
       
       const { employee_id, ...userUpdates } = updates;
-      
+      if (userUpdates.role !== undefined && !isUserRole(userUpdates.role)) {
+        throw new Error(t('userManagement.invalidRole'));
+      }
+
       const { data, error } = await supabase
         .from('users')
         .update(userUpdates)
@@ -117,17 +120,24 @@ export const useUsers = () => {
 
       if (error) throw error;
 
+      if (!data) throw new Error(t('userManagement.updateRefused'));
+
+      // undefined means "leave the link alone"; null means "remove it".
       if (employee_id !== undefined) {
-        await supabase
+        const { error: unlinkError } = await supabase
           .from('employees')
           .update({ user_id: null })
           .eq('user_id', id);
+        if (unlinkError) throw unlinkError;
 
-        if (employee_id && employee_id !== 'none') {
-          await supabase
+        if (employee_id) {
+          const { data: linked, error: linkError } = await supabase
             .from('employees')
             .update({ user_id: id })
-            .eq('id', employee_id);
+            .eq('id', employee_id)
+            .select('id');
+          if (linkError) throw linkError;
+          if (!linked || linked.length === 0) throw new Error(t('userManagement.linkRefused'));
         }
       }
 
@@ -175,28 +185,30 @@ export const useUsers = () => {
       // If user doesn't exist, we can consider deletion "successful" or throw error. 
       // Here we proceed but log warning if needed.
       
-      await supabase
-        .from('employees')
-        .update({ user_id: null })
-        .eq('user_id', id);
+      if (!oldUser) throw new Error(t('userManagement.updateRefused'));
+      if (id === currentUser.id) throw new Error(t('userManagement.cannotRemoveSelf'));
 
-      const { error } = await supabase
+      // Users are deactivated, not deleted: the audit trail and approvals
+      // refer to them, and the table has no DELETE policy. A row-level delete
+      // blocked by RLS returns no error, so the old code reported success
+      // while the user stayed in place.
+      const { data: updated, error } = await supabase
         .from('users')
-        .delete()
-        .eq('id', id);
+        .update({ status: 'inactive' })
+        .eq('id', id)
+        .select('id, status');
 
       if (error) throw error;
+      if (!updated || updated.length === 0) throw new Error(t('userManagement.updateRefused'));
 
-      if (oldUser) {
-        await logAuditTrail(
-          currentUser.id,
-          'DELETE',
-          'users',
-          id,
-          oldUser,
-          null
-        );
-      }
+      await logAuditTrail(
+        currentUser.id,
+        'UPDATE',
+        'users',
+        id,
+        oldUser,
+        { ...oldUser, status: 'inactive' }
+      );
 
       toast({
         title: t('common.success'),

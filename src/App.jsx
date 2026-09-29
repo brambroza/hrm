@@ -26,8 +26,8 @@ import TranslatePage from '@/pages/TranslatePage';
 import UserManagementPage from '@/pages/UserManagementPage';
 import CompanySettingsPage from '@/pages/settings/CompanySettingsPage';
 import SystemSettingsPage from '@/pages/settings/SystemSettingsPage';
-import IntegrationsPage from '@/pages/settings/IntegrationsPage';
-import BackupRecoveryPage from '@/pages/settings/BackupRecoveryPage';
+import FeatureUnavailable from '@/components/FeatureUnavailable';
+import SetupWizardPage from '@/pages/settings/SetupWizardPage';
 import AttendancePolicyPage from '@/pages/settings/AttendancePolicyPage';
 import ReportsPage from '@/pages/ReportsPage';
 import AttendanceCalculationPage from '@/pages/AttendanceCalculationPage';
@@ -75,8 +75,11 @@ function App() {
               <Route path="settings/departments" element={<DepartmentManagementPage />} />
               <Route path="settings/attendance-policy" element={<AttendancePolicyPage />} />
               <Route path="settings/system" element={<SystemSettingsPage />} />
-              <Route path="settings/integrations" element={<IntegrationsPage />} />
-              <Route path="settings/backup" element={<BackupRecoveryPage />} />
+              <Route path="settings/setup" element={<SetupWizardPage />} />
+              {/* IntegrationsPage and BackupRecoveryPage simulated success without doing
+                  anything; they stay out of the app until the real features exist. */}
+              <Route path="settings/integrations" element={<FeatureUnavailable titleKey="settings.integrations" messageKey="featureUnavailable.integrations" />} />
+              <Route path="settings/backup" element={<FeatureUnavailable titleKey="settings.backupRecovery" messageKey="featureUnavailable.backup" />} />
               <Route path="settings/audit-log" element={<AuditLogPage />} />
               <Route path="settings/users" element={<UserManagementPage />} />
               <Route path="settings/translate" element={<TranslatePage />} />

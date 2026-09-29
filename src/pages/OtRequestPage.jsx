@@ -10,11 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { formatThaiDate } from '@/utils/helpers';
 import AccessDenied from '@/components/AccessDenied';
+import { canDecideRequest, clockMinutesBetween, validateOtRequest } from '@/lib/requests';
 
 const OtRequestPage = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { canView, canAdd, canEdit } = usePermission();
+  const { canView, canAdd, canEdit, canUseSelfService } = usePermission();
   const { user, role } = useAuth();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
@@ -33,24 +34,28 @@ const OtRequestPage = () => {
   });
 
   const canManageAll = role === 'admin' || role === 'hr';
-  const canManageTeam = role === 'supervisor';
+  const canManageTeam = role === 'supervisor' || role === 'manager';
+  const canOpen = canUseSelfService('ot_request');
+  const canFile = canAdd('ot_request') || Boolean(employeeProfile?.id);
+  const canPickEmployee = canAdd('ot_request') && (canManageAll || canManageTeam);
 
   useEffect(() => {
-    if (!canView('ot_request')) {
+    if (!canOpen) {
       setLoading(false);
       return;
     }
     loadData();
-  }, [role, user?.id]);
+  }, [role, user?.id, canOpen]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('employees')
         .select('id, department, employee_id, name')
         .eq('user_id', user?.id)
         .maybeSingle();
+      if (profileError) throw profileError;
 
       setEmployeeProfile(profile || null);
 
@@ -118,7 +123,7 @@ const OtRequestPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const targetEmployeeId = canManageAll || canManageTeam ? formData.employee_id : employeeProfile?.id;
+      const targetEmployeeId = canPickEmployee ? formData.employee_id : employeeProfile?.id;
       if (!targetEmployeeId) {
         toast({
           variant: 'destructive',
@@ -128,7 +133,13 @@ const OtRequestPage = () => {
         return;
       }
 
-      const minutes = calculateMinutes(formData.start_time, formData.end_time);
+      const problem = validateOtRequest(formData);
+      if (problem) {
+        toast({ variant: 'destructive', title: t('common.error'), description: t(problem) });
+        return;
+      }
+
+      const minutes = clockMinutesBetween(formData.start_time, formData.end_time);
       const payload = {
         employee_id: targetEmployeeId,
         request_date: formData.request_date,
@@ -158,15 +169,19 @@ const OtRequestPage = () => {
   const handleApprove = async () => {
     if (!approveId) return;
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('ot_requests')
         .update({
           status: 'approved',
           approved_by: user?.id || null,
           approved_at: new Date().toISOString()
         })
-        .eq('id', approveId);
+        .eq('id', approveId)
+        // Only a request that is still pending; someone else may have decided it.
+        .eq('status', 'pending')
+        .select();
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error(t('requests.alreadyDecided'));
       setApproveId(null);
       loadData();
     } catch (error) {
@@ -181,15 +196,19 @@ const OtRequestPage = () => {
   const handleReject = async () => {
     if (!rejectId) return;
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('ot_requests')
         .update({
           status: 'rejected',
           approved_by: user?.id || null,
           approved_at: new Date().toISOString()
         })
-        .eq('id', rejectId);
+        .eq('id', rejectId)
+        // Only a request that is still pending; someone else may have decided it.
+        .eq('status', 'pending')
+        .select();
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error(t('requests.alreadyDecided'));
       setRejectId(null);
       loadData();
     } catch (error) {
@@ -201,7 +220,7 @@ const OtRequestPage = () => {
     }
   };
 
-  if (!canView('ot_request')) {
+  if (!canOpen) {
     return <AccessDenied />;
   }
 
@@ -216,7 +235,7 @@ const OtRequestPage = () => {
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('ot.title')}</h1>
             <p className="text-slate-500 dark:text-slate-400">{requests.length} requests</p>
           </div>
-          {canAdd('ot_request') && (
+          {canFile && (
             <Button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700">
               Add OT Request
             </Button>
@@ -256,7 +275,12 @@ const OtRequestPage = () => {
                       <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{req.minutes}</td>
                       <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{t(`leave.status.${req.status || 'pending'}`, req.status)}</td>
                       <td className="px-6 py-4 text-sm text-right">
-                        {canEdit('ot_request') && req.status === 'pending' && (
+                        {canDecideRequest({
+                          canEdit: canEdit('ot_request'),
+                          status: req.status,
+                          requestEmployeeId: req.employee_id,
+                          deciderEmployeeId: employeeProfile?.id,
+                        }) && (
                           <div className="flex justify-end gap-2">
                             <Button size="sm" variant="outline" onClick={() => setApproveId(req.id)}>{t('common.approve')}</Button>
                             <Button size="sm" variant="outline" onClick={() => setRejectId(req.id)}>{t('common.reject')}</Button>
@@ -278,7 +302,7 @@ const OtRequestPage = () => {
             <DialogTitle>{t('ot.newRequest')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {(canManageAll || canManageTeam) && (
+            {canPickEmployee && (
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Employee *</label>
                 <select
@@ -371,14 +395,6 @@ const OtRequestPage = () => {
       />
     </>
   );
-};
-
-const calculateMinutes = (start, end) => {
-  if (!start || !end) return 0;
-  const startTime = new Date(`2000-01-01T${start}:00+07:00`);
-  const endTime = new Date(`2000-01-01T${end}:00+07:00`);
-  const diff = Math.round((endTime - startTime) / 60000);
-  return Math.max(diff, 0);
 };
 
 export default OtRequestPage;

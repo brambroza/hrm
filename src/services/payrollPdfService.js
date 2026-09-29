@@ -1,186 +1,220 @@
-
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { formatThaiDateTime, getThaiISODate } from '@/utils/helpers';
-// Note: In a real app, you'd import a Thai font like THSarabunNew-normal.js here. 
-// For this environment, we'll use default fonts or simulate the structure.
-// If actual Thai font support is strictly required, we'd need to add the font file and register it.
-// Assuming basic English for structure or standard font fallback.
+import { THAI_FONT, useThaiFont } from '@/lib/pdfThaiFont';
+import { formatBaht } from '@/lib/money';
 
-export const generatePayrollSlipPdf = (payrollData, employeeData, companyData) => {
+/** Table styling shared by every table so Thai text renders in the body and the header. */
+const tableFont = {
+  styles: { font: THAI_FONT, fontStyle: 'normal' },
+  headStyles: { font: THAI_FONT, fontStyle: 'bold' },
+};
+
+/**
+ * Strip characters that are not safe in a file name.
+ * @param {string} value - Text to use in a file name.
+ * @returns {string} Safe text.
+ */
+const fileSafe = (value) => String(value ?? '').replace(/[\\/:*?"<>|\s]+/g, '_');
+
+/**
+ * Build a payslip document.
+ * @param {object} payrollData - Figures: basic_salary, total_income, total_deductions, net_salary, periodName, allowances, deductions.
+ * @param {object} employeeData - name, employee_id, department, position.
+ * @param {object} companyData - name, address, phone, email of the employer.
+ * @param {(file: string) => Promise<ArrayBuffer>} [loadFont] - Custom font reader, used by tests.
+ * @returns {Promise<import('jspdf').jsPDF>} The finished document.
+ */
+export const buildPayrollSlipPdf = async (payrollData, employeeData, companyData, loadFont) => {
   const doc = new jsPDF();
-  
-  // -- Setup Font (Mocking Thai font setup if file available, else use standard) --
-  // doc.addFileToVFS('THSarabunNew-normal.ttf', fontBase64);
-  // doc.addFont('THSarabunNew-normal.ttf', 'THSarabunNew', 'normal');
-  // doc.setFont('THSarabunNew'); 
+  await useThaiFont(doc, loadFont);
 
-  // Header
-  doc.setFontSize(22);
-  doc.text(companyData?.name || "Company Name", 105, 20, { align: 'center' });
-  
+  doc.setFont(THAI_FONT, 'bold');
+  doc.setFontSize(20);
+  doc.text(companyData?.name || '-', 105, 20, { align: 'center' });
+
+  doc.setFont(THAI_FONT, 'normal');
+  doc.setFontSize(11);
+  if (companyData?.address) doc.text(companyData.address, 105, 29, { align: 'center' });
+  const contact = [companyData?.phone && `โทร ${companyData.phone}`, companyData?.email].filter(Boolean).join(' · ');
+  if (contact) doc.text(contact, 105, 36, { align: 'center' });
+
+  doc.line(15, 43, 195, 43);
+
+  doc.setFont(THAI_FONT, 'bold');
+  doc.setFontSize(17);
+  doc.text('สลิปเงินเดือน', 105, 54, { align: 'center' });
+
+  doc.setFont(THAI_FONT, 'normal');
   doc.setFontSize(12);
-  doc.text(companyData?.address || "Company Address", 105, 30, { align: 'center' });
-  doc.text(`Phone: ${companyData?.phone || '-'} | Email: ${companyData?.email || '-'}`, 105, 38, { align: 'center' });
+  doc.text(`งวด ${payrollData?.periodName || '-'}`, 105, 62, { align: 'center' });
 
-  doc.line(15, 45, 195, 45);
-
-  // Title
-  doc.setFontSize(18);
-  doc.text("PAYROLL SLIP / สลิปเงินเดือน", 105, 55, { align: 'center' });
-  
-  // Period Info
-  doc.setFontSize(12);
-  doc.text(`Period: ${payrollData?.periodName || '-'}`, 105, 63, { align: 'center' });
-
-  // Employee Details
   doc.setFontSize(11);
   const leftColX = 15;
   const rightColX = 110;
   let startY = 75;
 
-  doc.text(`Employee Name: ${employeeData?.name || '-'}`, leftColX, startY);
-  doc.text(`Employee ID: ${employeeData?.employee_id || '-'}`, rightColX, startY);
-  
+  doc.text(`ชื่อ-สกุล: ${employeeData?.name || '-'}`, leftColX, startY);
+  doc.text(`รหัสพนักงาน: ${employeeData?.employee_id || '-'}`, rightColX, startY);
+
   startY += 8;
-  doc.text(`Department: ${employeeData?.department || '-'}`, leftColX, startY);
-  doc.text(`Position: ${employeeData?.position || '-'}`, rightColX, startY);
-  
-  // Tables
-  // Earnings
+  doc.text(`แผนก: ${employeeData?.department || '-'}`, leftColX, startY);
+  doc.text(`ตำแหน่ง: ${employeeData?.position || '-'}`, rightColX, startY);
+
   const earnings = [
-    ['Base Salary', parseFloat(payrollData?.basic_salary || 0).toFixed(2)],
-    ...((payrollData?.allowances || []).map(a => [a.name, parseFloat(a.amount).toFixed(2)])),
-    ['Total Earnings', parseFloat(payrollData?.total_income || 0).toFixed(2)]
+    ['เงินเดือน', formatBaht(payrollData?.basic_salary)],
+    ...(payrollData?.allowances || []).map((a) => [a.name, formatBaht(a.amount)]),
+    ['รวมรายได้', formatBaht(payrollData?.total_income)],
   ];
 
   doc.autoTable({
     startY: startY + 15,
-    head: [['Earnings / รายได้', 'Amount (THB)']],
+    head: [['รายได้', 'บาท']],
     body: earnings,
     theme: 'grid',
-    headStyles: { fillColor: [22, 163, 74] }, // Green-600
+    ...tableFont,
+    headStyles: { ...tableFont.headStyles, fillColor: [21, 128, 61] },
     columnStyles: { 1: { halign: 'right' } },
-    margin: { left: 15, right: 110 } // Left side table
+    margin: { left: 15, right: 110 },
   });
+  const earningsEnd = doc.lastAutoTable.finalY;
 
-  // Deductions
   const deductions = [
-    ...((payrollData?.deductions || []).map(d => [d.name, parseFloat(d.amount).toFixed(2)])),
-    ['Total Deductions', parseFloat(payrollData?.total_deductions || 0).toFixed(2)]
+    ...(payrollData?.deductions || []).map((d) => [d.name, formatBaht(d.amount)]),
+    ['รวมรายการหัก', formatBaht(payrollData?.total_deductions)],
   ];
 
   doc.autoTable({
     startY: startY + 15,
-    head: [['Deductions / รายหัก', 'Amount (THB)']],
+    head: [['รายการหัก', 'บาท']],
     body: deductions,
     theme: 'grid',
-    headStyles: { fillColor: [220, 38, 38] }, // Red-600
+    ...tableFont,
+    headStyles: { ...tableFont.headStyles, fillColor: [185, 28, 28] },
     columnStyles: { 1: { halign: 'right' } },
-    margin: { left: 110, right: 15 } // Right side table
+    margin: { left: 110, right: 15 },
   });
 
-  // Net Pay
-  const finalY = Math.max(doc.lastAutoTable.finalY, startY + 15 + (earnings.length * 10)) + 20;
-  
-  doc.setFillColor(240, 253, 244); // Light green bg
-  doc.rect(15, finalY - 10, 180, 20, 'F');
-  doc.setFontSize(14);
-  doc.setTextColor(22, 163, 74);
-  doc.text("NET SALARY / เงินเดือนสุทธิ", 20, finalY + 3);
-  doc.setFontSize(16);
-  doc.text(`${parseFloat(payrollData?.net_salary || 0).toFixed(2)} THB`, 190, finalY + 3, { align: 'right' });
-  
-  doc.setTextColor(0,0,0);
-  doc.setFontSize(10);
-  doc.text(`Generated on: ${formatThaiDateTime(new Date())}`, 15, 280);
-  doc.text("Authorized Signature", 150, 270, { align: 'center' });
-  doc.line(130, 265, 170, 265);
+  const finalY = Math.max(earningsEnd, doc.lastAutoTable.finalY) + 20;
 
-  doc.save(`payroll_slip_${employeeData?.employee_id}_${payrollData?.periodName}.pdf`);
+  doc.setFillColor(240, 253, 244);
+  doc.rect(15, finalY - 10, 180, 20, 'F');
+  doc.setFont(THAI_FONT, 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(21, 128, 61);
+  doc.text('เงินได้สุทธิ', 20, finalY + 3);
+  doc.setFontSize(16);
+  doc.text(`${formatBaht(payrollData?.net_salary)} บาท`, 190, finalY + 3, { align: 'right' });
+
+  doc.setFont(THAI_FONT, 'normal');
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.text(`ออกเอกสารเมื่อ ${formatThaiDateTime(new Date())}`, 15, 280);
+  doc.line(130, 265, 170, 265);
+  doc.text('ผู้มีอำนาจลงนาม', 150, 270, { align: 'center' });
+
+  return doc;
 };
 
-export const generatePayrollReportPdf = (reportData, periodName) => {
-    const doc = new jsPDF();
-    
-    // Title
-    doc.setFontSize(20);
-    doc.text("PAYROLL REPORT / รายงานสรุปเงินเดือน", 105, 20, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.text(`Period: ${periodName}`, 105, 30, { align: 'center' });
-    doc.text(`Generated Date: ${formatThaiDateTime(new Date())}`, 105, 38, { align: 'center' });
+/**
+ * Build a payslip and download it.
+ * @param {object} payrollData - See buildPayrollSlipPdf.
+ * @param {object} employeeData - See buildPayrollSlipPdf.
+ * @param {object} companyData - See buildPayrollSlipPdf.
+ * @returns {Promise<void>}
+ */
+export const generatePayrollSlipPdf = async (payrollData, employeeData, companyData) => {
+  const doc = await buildPayrollSlipPdf(payrollData, employeeData, companyData);
+  doc.save(`payroll_slip_${fileSafe(employeeData?.employee_id)}_${fileSafe(payrollData?.periodName)}.pdf`);
+};
 
-    // Summary Section
-    doc.setFontSize(14);
-    doc.text("Summary / สรุปภาพรวม", 15, 50);
-    
-    const summaryData = [
-        ['Total Employees', reportData.summary.totalEmployees.toString()],
-        ['Total Base Salary', new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(reportData.summary.totalBaseSalary)],
-        ['Total Income', new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(reportData.summary.totalIncome)],
-        ['Total Deductions', new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(reportData.summary.totalDeductions)],
-        ['Total Net Salary', new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(reportData.summary.totalNetSalary)]
-    ];
+/**
+ * Build the payroll summary report.
+ * @param {{summary: object, byDepartment: object, byType: object}} reportData - Aggregated figures.
+ * @param {string} periodName - Name of the payroll period.
+ * @param {(file: string) => Promise<ArrayBuffer>} [loadFont] - Custom font reader, used by tests.
+ * @returns {Promise<import('jspdf').jsPDF>} The finished document.
+ */
+export const buildPayrollReportPdf = async (reportData, periodName, loadFont) => {
+  const doc = new jsPDF();
+  await useThaiFont(doc, loadFont);
 
-    doc.autoTable({
-        startY: 55,
-        body: summaryData,
-        theme: 'plain',
-        styles: { fontSize: 11, cellPadding: 2 },
-        columnStyles: { 1: { fontStyle: 'bold', halign: 'right' } }
-    });
+  doc.setFont(THAI_FONT, 'bold');
+  doc.setFontSize(19);
+  doc.text('รายงานสรุปเงินเดือน', 105, 20, { align: 'center' });
 
-    // Department Table
+  doc.setFont(THAI_FONT, 'normal');
+  doc.setFontSize(12);
+  doc.text(`งวด ${periodName || '-'}`, 105, 30, { align: 'center' });
+  doc.text(`ออกเอกสารเมื่อ ${formatThaiDateTime(new Date())}`, 105, 38, { align: 'center' });
+
+  doc.setFont(THAI_FONT, 'bold');
+  doc.setFontSize(14);
+  doc.text('สรุปภาพรวม', 15, 50);
+
+  const summary = reportData.summary;
+  doc.autoTable({
+    startY: 55,
+    body: [
+      ['จำนวนพนักงาน', String(summary.totalEmployees)],
+      ['รวมเงินเดือน', formatBaht(summary.totalBaseSalary)],
+      ['รวมรายได้', formatBaht(summary.totalIncome)],
+      ['รวมรายการหัก', formatBaht(summary.totalDeductions)],
+      ['รวมเงินได้สุทธิ', formatBaht(summary.totalNetSalary)],
+    ],
+    theme: 'plain',
+    styles: { ...tableFont.styles, fontSize: 11, cellPadding: 2 },
+    columnStyles: { 1: { fontStyle: 'bold', halign: 'right' } },
+  });
+
+  /**
+   * Draw one grouped table, starting a new page when little room is left.
+   * @param {string} title - Section heading.
+   * @param {string} firstColumn - Heading of the grouping column.
+   * @param {object} groups - Figures keyed by group name.
+   * @param {number[]} color - RGB fill of the header row.
+   */
+  const groupedTable = (title, firstColumn, groups, color) => {
     let startY = doc.lastAutoTable.finalY + 15;
-    doc.setFontSize(14);
-    doc.text("By Department / แยกตามแผนก", 15, startY);
-
-    const deptBody = Object.entries(reportData.byDepartment).map(([dept, data]) => [
-        dept,
-        data.count,
-        new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(data.totalSalary),
-        new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(data.totalDeductions),
-        new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(data.totalNet)
-    ]);
-
-    doc.autoTable({
-        startY: startY + 5,
-        head: [['Department', 'Count', 'Total Income', 'Deductions', 'Net Salary']],
-        body: deptBody,
-        theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246] }, // Blue
-        columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } }
-    });
-
-    // Employee Type Table
-    startY = doc.lastAutoTable.finalY + 15;
-    
-    // Check if new page is needed
     if (startY > 250) {
-        doc.addPage();
-        startY = 20;
+      doc.addPage();
+      startY = 20;
     }
 
+    doc.setFont(THAI_FONT, 'bold');
     doc.setFontSize(14);
-    doc.text("By Type / แยกตามประเภท", 15, startY);
-
-    const typeBody = Object.entries(reportData.byType).map(([type, data]) => [
-        type,
-        data.count,
-        new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(data.totalSalary),
-        new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(data.totalDeductions),
-        new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(data.totalNet)
-    ]);
+    doc.text(title, 15, startY);
 
     doc.autoTable({
-        startY: startY + 5,
-        head: [['Type', 'Count', 'Total Income', 'Deductions', 'Net Salary']],
-        body: typeBody,
-        theme: 'grid',
-        headStyles: { fillColor: [16, 185, 129] }, // Emerald
-        columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } }
+      startY: startY + 5,
+      head: [[firstColumn, 'จำนวนคน', 'รวมรายได้', 'รายการหัก', 'เงินได้สุทธิ']],
+      body: Object.entries(groups || {}).map(([name, data]) => [
+        name,
+        data.count,
+        formatBaht(data.totalSalary),
+        formatBaht(data.totalDeductions),
+        formatBaht(data.totalNet),
+      ]),
+      theme: 'grid',
+      ...tableFont,
+      headStyles: { ...tableFont.headStyles, fillColor: color },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
     });
+  };
 
-    doc.save(`payroll_report_${getThaiISODate()}.pdf`);
+  groupedTable('แยกตามแผนก', 'แผนก', reportData.byDepartment, [29, 78, 216]);
+  groupedTable('แยกตามประเภท', 'ประเภท', reportData.byType, [4, 120, 87]);
+
+  return doc;
+};
+
+/**
+ * Build the payroll summary report and download it.
+ * @param {{summary: object, byDepartment: object, byType: object}} reportData - Aggregated figures.
+ * @param {string} periodName - Name of the payroll period.
+ * @returns {Promise<void>}
+ */
+export const generatePayrollReportPdf = async (reportData, periodName) => {
+  const doc = await buildPayrollReportPdf(reportData, periodName);
+  doc.save(`payroll_report_${getThaiISODate()}.pdf`);
 };

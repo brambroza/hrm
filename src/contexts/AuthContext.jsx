@@ -19,6 +19,9 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null);
   const [permissions, setPermissions] = useState([]);
   const [organizationId, setOrganizationId] = useState(null);
+  // The employee record linked to this login, if any. It is what lets someone
+  // without module permissions reach their own leave and OT requests.
+  const [employeeId, setEmployeeId] = useState(null);
 
   useEffect(() => {
     // Get initial session
@@ -31,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         setRole(null);
         setPermissions([]);
         setOrganizationId(null);
+        setEmployeeId(null);
         setLoading(false);
         return;
       }
@@ -60,6 +64,7 @@ export const AuthProvider = ({ children }) => {
         setRole(null);
         setPermissions([]);
         setOrganizationId(null);
+        setEmployeeId(null);
       }
 
       if (event === 'TOKEN_REFRESH_FAILED') {
@@ -69,6 +74,7 @@ export const AuthProvider = ({ children }) => {
         setRole(null);
         setPermissions([]);
         setOrganizationId(null);
+        setEmployeeId(null);
       }
 
       setLoading(false);
@@ -91,9 +97,18 @@ export const AuthProvider = ({ children }) => {
       
       if (userError) throw userError;
       
-      const userRole = userData?.role || 'employee';
+      // Stored roles written by the old user form may be capitalised.
+      const userRole = String(userData?.role || 'employee').trim().toLowerCase();
       setOrganizationId(userData?.organization_id || null);
       setRole(userRole);
+
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (employeeError) throw employeeError;
+      setEmployeeId(employeeData?.id || null);
 
       // 2. Fetch role_id from roles table
       // Use .eq() for proper filtering and maybeSingle() to handle "no role found" gracefully
@@ -135,6 +150,7 @@ export const AuthProvider = ({ children }) => {
       setRole('employee');
       setPermissions([]);
       setOrganizationId(null);
+        setEmployeeId(null);
     }
   };
 
@@ -180,6 +196,7 @@ export const AuthProvider = ({ children }) => {
     role,
     permissions,
     organizationId,
+    employeeId,
     hasPermission,
     signIn,
     signOut,

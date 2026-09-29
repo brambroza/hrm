@@ -164,16 +164,6 @@ const AllowancesDeductionsPage = () => {
           <p className="text-slate-500 dark:text-slate-400">Manage payroll components for calculations.</p>
         </div>
         <div className="flex gap-2">
-           <PermissionGuard permission="payroll" action="calculate">
-             <Button variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-               <Calculator className="w-4 h-4 mr-2" /> Calculate
-             </Button>
-           </PermissionGuard>
-           <PermissionGuard permission="payroll" action="export">
-             <Button variant="outline">
-               <Download className="w-4 h-4 mr-2" /> Export
-             </Button>
-           </PermissionGuard>
            <PermissionGuard permission="payroll" action="add">
             <Button onClick={() => handleOpenModal()} className="bg-emerald-500 hover:bg-emerald-600 text-white">
               <Plus className="w-4 h-4 mr-2" /> Add New Item
@@ -193,11 +183,6 @@ const AllowancesDeductionsPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
             />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="text-slate-600 dark:text-slate-300">
-              <Filter className="w-4 h-4 mr-2" /> Filter
-            </Button>
           </div>
         </div>
 

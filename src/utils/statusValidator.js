@@ -33,6 +33,18 @@ export const normalizeStatus = (status) => {
   return VALID_STATUSES.DRAFT;
 };
 
+/**
+ * Whether a payroll period is closed and therefore locked against changes.
+ * Goes through normalizeStatus so 'CLOSED', 'closed' and 'locked' all count;
+ * comparing the raw value against one spelling left closed periods editable.
+ * @param {string|null|undefined} status - Raw status from the database.
+ * @returns {boolean} True when the period must not be modified.
+ */
+export const isPeriodClosed = (status) => normalizeStatus(status) === VALID_STATUSES.CLOSED;
+
+/** Message used whenever a change to a closed period is refused. */
+export const CLOSED_PERIOD_MESSAGE = 'งวดนี้ปิดแล้ว แก้ไขไม่ได้ การแก้ไขให้ทำเป็นรายการปรับปรุงในงวดถัดไป';
+
 // Get display label in Thai
 export const getStatusLabel = (status) => {
   const s = normalizeStatus(status);

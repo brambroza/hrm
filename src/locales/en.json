@@ -74,7 +74,8 @@
     "required": "This field is required",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "mainMenu": "Main menu"
+    "mainMenu": "Main menu",
+    "warning": "Warning"
   },
   "language": {
     "change": "Change Language",
@@ -230,7 +231,8 @@
     "statusActive": "Active",
     "statusResigned": "Resigned",
     "statusTerminated": "Terminated",
-    "addedSuccessfully": "Employee added"
+    "addedSuccessfully": "Employee added",
+    "confirmResign": "Mark this employee as resigned, with today as the last day of employment? The status can be changed back later from the edit form."
   },
   "attendance": {
     "attendanceLog": "Attendance Log",
@@ -250,7 +252,8 @@
     "noAssignments": "No shift assignments yet",
     "startDate": "Start date",
     "endDate": "End date",
-    "shift": "Shift"
+    "shift": "Shift",
+    "enterAtLeastOneTime": "Enter at least one time."
   },
   "userManagement": {
     "title": "User Management",
@@ -261,7 +264,13 @@
     "searchPlaceholder": "Search users...",
     "setPermissions": "Set Permissions",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "invalidRole": "Invalid role",
+    "createUnavailable": "The user could not be created. The user creation service is not available; contact your administrator.",
+    "updateRefused": "Not saved. The user was not found or you do not have permission.",
+    "linkRefused": "Could not link the employee. It was not found or you do not have permission.",
+    "cannotRemoveSelf": "You cannot deactivate your own account.",
+    "userDeleted": "User deactivated"
   },
   "roles": {
     "admin": "Admin",
@@ -306,7 +315,8 @@
       "workPermit": "Work permit",
       "visa": "Visa",
       "ninetyDayReport": "90-day report"
-    }
+    },
+    "loadFailed": "The overview could not be loaded. The figures below may be wrong."
   },
   "payroll": {
     "setup": "Setup",
@@ -328,7 +338,15 @@
     "searchItems": "Search items...",
     "saveItem": "Save item",
     "activeStatus": "Active",
-    "noItems": "No items yet. Add one to get started."
+    "noItems": "No items yet. Add one to get started.",
+    "periodLocked": "Period closed — locked",
+    "closedBanner": "This period is closed and its calculations are locked. Record corrections as adjustments in the next period.",
+    "batchDone": "Calculated {{count}}",
+    "batchSkipped": "skipped {{count}} already calculated",
+    "batchFailed": "{{count}} failed",
+    "batchHadErrors": "Calculation incomplete",
+    "slipDownloaded": "Payslip downloaded",
+    "calculated": "Calculated"
   },
   "userProfile": {
     "profile": "Profile",
@@ -438,8 +456,10 @@
       "absent_by_late": "Absent (late)",
       "leave": "On leave",
       "holiday": "Holiday",
-      "missing_punch": "Missing scan"
-    }
+      "missing_punch": "Missing scan",
+      "day_off": "Weekly day off"
+    },
+    "truncated": "There is more data than one read can return, so these results are incomplete. Choose a shorter date range."
   },
   "attendancePolicy": {
     "title": "Attendance policy",
@@ -471,5 +491,200 @@
     "tooLarge": "File is larger than {{size}} MB. Please choose a smaller image.",
     "uploadFailed": "Could not upload the photo",
     "noOrganization": "Your account is not linked to an organization, so photos cannot be uploaded. Contact your administrator."
+  },
+  "requests": {
+    "invalidDate": "Invalid date",
+    "endBeforeStart": "The end date cannot be before the start date",
+    "halfDaySingleDay": "Half-day leave must start and end on the same day",
+    "overlap": "These dates overlap an existing leave request",
+    "invalidTime": "Invalid time",
+    "zeroDuration": "The start and end times must differ",
+    "reasonRequired": "Give a reason of at least 3 characters",
+    "alreadyDecided": "This request has already been decided, or you do not have permission. Reload the page.",
+    "confirmApprove": "Confirm approval",
+    "confirmReject": "Confirm rejection",
+    "rejectReason": "Reason for rejection"
+  },
+  "featureUnavailable": {
+    "integrations": "Connections to scanners, banks and other systems are not available in this version. The team sets them up as part of the project scope.",
+    "backup": "Backups are taken at database level by the system administrator. This screen is not available yet; contact the administrator to restore data.",
+    "back": "Back to settings"
+  },
+  "setup": {
+    "title": "Guided setup",
+    "subtitle": "Six short steps. Things that belong together are asked once and applied everywhere. Nothing is saved until the review step.",
+    "cardDescription": "Company, working hours, attendance rules, holidays, departments and pay cycle in one place",
+    "steps": "Steps",
+    "next": "Next",
+    "back": "Back",
+    "save": "Save everything",
+    "saveAgain": "Save the rest again",
+    "retry": "Try again",
+    "saved": "Every part of the setup was saved",
+    "savedPartly": "Partly saved",
+    "savedPartlyDetail": "{{count}} part(s) could not be saved. See below. What was saved does not need repeating.",
+    "loadFailed": "The setup could not be loaded",
+    "noOrganization": "Your organization was not found",
+    "alsoChanges": "This step also sets",
+    "step": {
+      "company": "Company",
+      "workHours": "Working days and hours",
+      "policy": "Attendance rules",
+      "holidays": "Annual holidays",
+      "departments": "Departments",
+      "payroll": "Pay cycle",
+      "review": "Review and save"
+    },
+    "heading": {
+      "company": "Company details",
+      "workHours": "Normal working days and hours",
+      "policy": "Attendance and overtime rules",
+      "holidays": "Annual holidays",
+      "departments": "Departments",
+      "payroll": "Pay cycle",
+      "review": "Review before saving"
+    },
+    "intro": {
+      "company": "Shown on payslips and reports",
+      "workHours": "Answer once; the default shift and weekly days off follow",
+      "policy": "Decides what counts as late, absent and overtime",
+      "holidays": "Dates listed here are not counted as absences",
+      "departments": "Used to group employees, reports and approvals",
+      "payroll": "Used as the starting point for new pay periods",
+      "review": "Check your answers, then save once"
+    },
+    "company": {
+      "name": "Company name",
+      "taxId": "Tax ID",
+      "taxIdHint": "13 digits; the check digit is verified",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "addressHint": "As it should appear on payslips"
+    },
+    "weekday": {
+      "Monday": "Mon",
+      "Tuesday": "Tue",
+      "Wednesday": "Wed",
+      "Thursday": "Thu",
+      "Friday": "Fri",
+      "Saturday": "Sat",
+      "Sunday": "Sun"
+    },
+    "workHours": {
+      "days": "Working days",
+      "start": "Start of work",
+      "end": "End of work",
+      "breakStart": "Break starts",
+      "breakEnd": "Break ends",
+      "breakHint": "Leave both empty if there is no break",
+      "effectShift": "{{name}} {{start}}–{{end}}, {{hours}} hours worked",
+      "effectOvernight": "The end is earlier than the start, so this is treated as an overnight shift",
+      "effectDaysOff": "Weekly days off: {{days}}",
+      "effectNoDaysOff": "No weekly days off",
+      "effectCalc": "Weekly days off are not counted as absences in the attendance calculation"
+    },
+    "policy": {
+      "grace": "Grace period for lateness (minutes)",
+      "graceHint": "Arriving this late or less is not counted as late",
+      "absent": "Late by how many minutes counts as absent",
+      "absentHint": "Must be more than the grace period",
+      "otMethod": "Count overtime from",
+      "otMethods": {
+        "scan": "The actual scan-out time",
+        "request": "Approved overtime requests"
+      },
+      "otRounding": "Overtime rounding",
+      "otRoundingHint": "Rounded down to the interval. Takes effect when the Phase 1 calculation engine is enabled",
+      "otRoundings": {
+        "none": "None",
+        "15": "Every 15 minutes",
+        "30": "Every 30 minutes",
+        "60": "Every hour"
+      },
+      "effectShift": "Late tolerance of {{name}} becomes {{minutes}} minutes"
+    },
+    "holidays": {
+      "count": "{{count}} day(s) in {{year}}",
+      "add": "Add a holiday",
+      "addFixed": "Add fixed-date holidays",
+      "note": "At least 13 traditional holidays a year are required, National Labour Day included. Holidays set by the lunar calendar and substitution days change every year; add them from the official announcement.",
+      "empty": "No holidays for this year yet",
+      "date": "Date",
+      "name": "Holiday name",
+      "remove": "Remove {{name}}"
+    },
+    "departments": {
+      "name": "Department name",
+      "add": "Add a department",
+      "remove": "Remove {{name}}",
+      "note": "Existing departments are renamed or removed on"
+    },
+    "payroll": {
+      "payDay": "Pay day of each month",
+      "payDayHint": "1 to 31; shorter months use their last day",
+      "method": "Payment method",
+      "methods": {
+        "bank_transfer": "Bank transfer",
+        "cash": "Cash",
+        "cheque": "Cheque"
+      },
+      "bank": "Main bank used for payment"
+    },
+    "review": {
+      "daysPerWeek": "days a week",
+      "policy": "{{grace}} minutes grace · absent after {{absent}} minutes late",
+      "payDay": "Paid on day {{day}}",
+      "willChange": "Saving will",
+      "results": "Save results",
+      "done": "saved"
+    },
+    "plan": {
+      "organization": "Update the company details",
+      "settings": "Save working days, hours and the pay cycle",
+      "shiftCreate": "Create {{name}} from the working hours",
+      "shiftUpdate": "Bring {{name}} in line with the working hours",
+      "weekOffs": "Adjust weekly days off (add {{add}}, remove {{remove}})",
+      "policy": "Save the attendance rules",
+      "holidays": "Adjust annual holidays (add {{add}}, rename {{update}}, remove {{remove}})",
+      "departments": "Add {{count}} new department(s)"
+    },
+    "section": {
+      "company": "Company details",
+      "settings": "Working hours and pay cycle",
+      "shift": "Default shift",
+      "weekOffs": "Weekly days off",
+      "policy": "Attendance rules",
+      "holidays": "Annual holidays",
+      "departments": "Departments"
+    },
+    "banner": {
+      "progress": "Setup: {{done}} of {{total}} steps done",
+      "missing": "Still to do",
+      "continue": "Continue setup"
+    },
+    "errors": {
+      "required": "Required",
+      "tooLong": "Too long",
+      "taxId": "Invalid tax ID: 13 digits with a correct check digit",
+      "phone": "Phone numbers start with 0 and have 9 to 10 digits",
+      "email": "Invalid email",
+      "workingDays": "Choose at least one working day",
+      "time": "Enter a time",
+      "sameTime": "Start and end must differ",
+      "breakPair": "Enter both ends of the break, or leave both empty",
+      "breakLength": "The break must be shorter than the working time",
+      "minutes": "Enter whole minutes",
+      "absentAfterGrace": "Must be more than the grace period",
+      "choice": "Choose from the list",
+      "date": "Invalid date",
+      "holidayYear": "The date must fall in the year being set up",
+      "holidayName": "Enter the holiday name",
+      "holidayDuplicate": "This date is already listed",
+      "departmentDuplicate": "Duplicate department name",
+      "departmentNone": "Add at least one department",
+      "payDay": "Enter a day from 1 to 31"
+    },
+    "hint": "Changes here update this setting only. To have the default shift and weekly days off follow, use"
   }
 }

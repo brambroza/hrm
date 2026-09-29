@@ -33,18 +33,6 @@ const TimeAttendancePage = () => {
             <p className="text-slate-500 dark:text-slate-400">Manage shifts, attendance logs, and assignments</p>
           </div>
           <div className="flex gap-2">
-            <PermissionGuard permission="time_attendance" action="add">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                {t('common.add')}
-              </Button>
-            </PermissionGuard>
-            <PermissionGuard permission="time_attendance" action="export">
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                {t('common.export')}
-              </Button>
-            </PermissionGuard>
           </div>
         </div>
 

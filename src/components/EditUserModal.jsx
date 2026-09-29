@@ -1,3 +1,4 @@
+import { USER_ROLES, DEFAULT_ROLE, normalizeRole } from '@/lib/roles';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/customSupabaseClient';
@@ -18,6 +19,7 @@ const EditUserModal = ({ isOpen, onClose, user, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
   
+  const [linkedEmployeeId, setLinkedEmployeeId] = useState('none');
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -31,20 +33,41 @@ const EditUserModal = ({ isOpen, onClose, user, onSuccess }) => {
       setFormData({
         full_name: user.full_name || '',
         email: user.email || '',
-        role: user.role || 'Employee',
+        // Users saved by the old form carry 'Admin' or 'HR'; show them as the
+        // role they were meant to have so saving repairs the record.
+        role: normalizeRole(user.role) || DEFAULT_ROLE,
         status: user.status || 'active',
-        employee_id: user.employee_id || ''
+        employee_id: 'none'
       });
-      fetchEmployees();
+      setLinkedEmployeeId('none');
+      fetchEmployees(user.id);
     }
   }, [isOpen, user]);
 
-  const fetchEmployees = async () => {
-    const { data } = await supabase
+  /**
+   * Load employees that can be linked: those without a login, plus the one
+   * already linked to this user. The link lives on employees.user_id, so the
+   * current link is read from there; users has no employee_id column.
+   * @param {string} userId - The user being edited.
+   */
+  const fetchEmployees = async (userId) => {
+    const { data, error } = await supabase
       .from('employees')
-      .select('id, name, employee_id')
-      .eq('status', 'active');
+      .select('id, name, employee_id, user_id')
+      .eq('status', 'active')
+      .or(`user_id.is.null,user_id.eq.${userId}`)
+      .order('employee_id');
+
+    if (error) {
+      toast({ variant: 'destructive', title: t('common.error'), description: error.message });
+      return;
+    }
+
     setEmployees(data || []);
+    const linked = (data || []).find((employee) => employee.user_id === userId);
+    const linkedId = linked ? linked.id : 'none';
+    setLinkedEmployeeId(linkedId);
+    setFormData((prev) => ({ ...prev, employee_id: linkedId }));
   };
 
   const handleSubmit = async (e) => {
@@ -60,11 +83,16 @@ const EditUserModal = ({ isOpen, onClose, user, onSuccess }) => {
 
     setLoading(true);
     const updates = {
-      full_name: formData.full_name,
+      full_name: formData.full_name.trim(),
       role: formData.role,
       status: formData.status,
-      employee_id: formData.employee_id === 'none' ? null : formData.employee_id
     };
+    // Only touch the employee link when the user actually changed it. Sending
+    // it on every save used to clear the link silently.
+    const chosen = formData.employee_id || 'none';
+    if (chosen !== linkedEmployeeId) {
+      updates.employee_id = chosen === 'none' ? null : chosen;
+    }
 
     const { error } = await updateUser(user.id, updates);
     setLoading(false);
@@ -116,11 +144,9 @@ const EditUserModal = ({ isOpen, onClose, user, onSuccess }) => {
                   <SelectValue placeholder={t('userManagement.role')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Admin">{t('roles.Admin')}</SelectItem>
-                  <SelectItem value="Manager">{t('roles.Manager')}</SelectItem>
-                  <SelectItem value="HR">{t('roles.HR')}</SelectItem>
-                  <SelectItem value="Accountant">{t('roles.Accountant')}</SelectItem>
-                  <SelectItem value="Employee">{t('roles.Employee')}</SelectItem>
+                  {USER_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>{t(`roles.${role}`)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
+import { fetchAllRows } from '@/services/queries';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
@@ -9,7 +10,7 @@ import AddEmployeeModal from '@/components/AddEmployeeModal';
 import EditEmployeeModal from '@/components/EditEmployeeModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import PermissionGuard from '@/components/PermissionGuard';
-import { exportToExcel, logAuditTrail } from '@/utils/helpers';
+import { exportToExcel, getThaiISODate, logAuditTrail } from '@/utils/helpers';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -56,16 +57,22 @@ const EmployeeListPage = () => {
 
   const fetchEmployees = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Only the columns the list shows. Salary and national ID stay on the
+    // server until someone opens a record. Read page by page so the list is
+    // complete past 1,000 employees.
+    const { data, error } = await fetchAllRows(() =>
+      supabase
+        .from('employees')
+        .select('id, employee_id, name, name_th, name_en, position, department, status, start_date, photo_url, created_at')
+        .order('created_at', { ascending: false })
+        .order('id')
+    );
 
     if (error) {
       toast({
         variant: 'destructive',
         title: t('common.error'),
-        description: 'Failed to fetch employees'
+        description: error.message
       });
     } else {
       setEmployees(data || []);
@@ -106,6 +113,32 @@ const EmployeeListPage = () => {
     setFilteredEmployees(filtered);
   };
 
+  /**
+   * Open the edit form with the full, current record. The list holds only the
+   * columns it displays, and editing from a partial or stale row would write
+   * blanks over salary and ID fields.
+   * @param {string} id - Employee row id.
+   */
+  const openEdit = async (id) => {
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) {
+      toast({
+        variant: 'destructive',
+        title: t('common.error'),
+        description: error?.message || t('employees.notFound')
+      });
+      return;
+    }
+
+    setSelectedEmployee(data);
+    setShowEditModal(true);
+  };
+
   const confirmDelete = (id) => {
     setDeleteId(id);
     setShowDeleteConfirm(true);
@@ -118,7 +151,7 @@ const EmployeeListPage = () => {
 
     const { error } = await supabase
       .from('employees')
-      .update({ status: 'resigned' })
+      .update({ status: 'resigned', end_date: getThaiISODate() })
       .eq('id', deleteId);
 
     if (error) {
@@ -283,8 +316,7 @@ const EmployeeListPage = () => {
                             size="sm"
                             variant="ghost"
                             onClick={() => {
-                              setSelectedEmployee(employee);
-                              setShowEditModal(true);
+                              openEdit(employee.id);
                             }}
                             className="text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                           >
@@ -340,7 +372,7 @@ const EmployeeListPage = () => {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
         title={t('common.delete')}
-        description="Are you sure you want to mark this employee as resigned? This action cannot be undone."
+        description={t('employees.confirmResign')}
         confirmText={t('common.confirm')}
         variant="destructive"
       />

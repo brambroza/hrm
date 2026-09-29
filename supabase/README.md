@@ -10,6 +10,9 @@
 | `migrations/0001_multi_tenant.sql` | Adds `organization_id` everywhere, rescopes unique constraints, backfills. |
 | `migrations/0002_rls.sql` | Enables Row Level Security and the access policies. |
 | `migrations/0003_org_provisioning.sql` | Permission catalogue, role templates, per-tenant provisioning, tenant auto-fill triggers. |
+| `migrations/0004_employee_photo_storage.sql` | Storage bucket and policies for employee photos. |
+| `migrations/0005_leads.sql` | `leads` table for the call-back form. |
+| `migrations/0006_phase0_integrity.sql` | Locks closed payroll periods, one calculation per employee per period, leave/OT decision rules, audit triggers, role check. **Run `tests/phase0_preflight.sql` first.** |
 
 Migrations run in numeric order and each is idempotent, so re-running one is safe.
 
@@ -107,3 +110,55 @@ admin 60 grants, hr 44, manager 35, supervisor 15, employee 1.
 `0005_leads.sql` adds `public.leads` for the call-back form at `/register`.
 The table is insert-only for `anon`/`authenticated`; review submissions in the
 Supabase dashboard (Table Editor → leads) or with `service_role`.
+
+## Phase 0 integrity (0006)
+
+`0006_phase0_integrity.sql` moves rules from the screens into the database:
+
+- A closed payroll period, and every calculation in it, cannot be changed or
+  deleted. Corrections go into the next period as adjustments.
+- One payroll calculation per employee per period.
+- Nobody approves or rejects their own leave or OT request. `approved_by` and
+  `approved_at` are stamped from the session, not from what the browser sent.
+  A rejection needs a reason (`decision_note`).
+- Every insert, update and delete on the main tables writes an audit row by
+  trigger. The screens still write their own rows for some actions, so those
+  changes appear twice until the manual calls are removed.
+- `users.role` accepts only the five provisioned roles.
+
+Before running it:
+
+```bash
+psql "$DATABASE_URL" -f supabase/tests/phase0_preflight.sql   # read-only
+```
+
+The migration stops, changing nothing, if it finds duplicate payroll
+calculations or users with a role that does not exist. Role casing
+(`Admin` → `admin`) is corrected automatically.
+
+The application code on this branch expects 0001-0006 to be applied. In
+particular, rejecting a leave request writes `decision_note`, which 0006 adds.
+
+`tests/phase0_integrity.sql` asserts each rule. Like the isolation test it
+rolls back at the end and belongs on a scratch database.
+
+Verified on a local PostgreSQL cluster built from `schema.sql` plus 0001-0006,
+with stand-ins for the Supabase `auth` and `storage` schemas: 0006 runs twice
+without error, both test scripts pass. It has not been run against the live
+database.
+
+## Edge Functions
+
+`functions/create-user` creates a login together with its `users` row. The
+browser cannot do this: it needs the service role key, and `users` has no
+INSERT policy. The function checks that the caller holds
+`user_management.add`, keeps the new user inside the caller's organization,
+and removes the login again if the `users` row cannot be written.
+
+```bash
+supabase functions deploy create-user
+supabase secrets set ALLOWED_ORIGIN=https://your-app-domain
+```
+
+Until it is deployed, the Add User form reports that the service is not
+available. It has not been deployed or run against a Supabase project yet.

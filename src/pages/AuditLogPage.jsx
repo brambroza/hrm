@@ -13,11 +13,15 @@ import { usePermission } from '@/hooks/usePermission';
 import { formatThaiDateTime } from '@/utils/helpers';
 import PermissionGuard from '@/components/PermissionGuard';
 import AccessDenied from '@/components/AccessDenied';
+import { useToast } from '@/components/ui/use-toast';
+import { addDays, isIsoDate, toBangkokTimestamp } from '@/lib/thaiTime';
 
 const AuditLogPage = () => {
   const { t } = useTranslation();
   const { canView } = usePermission();
+  const { toast } = useToast();
   const [logs, setLogs] = useState([]);
+  const [userNames, setUserNames] = useState({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({
     user: '',
@@ -36,21 +40,44 @@ const AuditLogPage = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
+      // The column is created_at. Ordering by `timestamp`, which does not
+      // exist, made every read fail and the page show an empty list.
       let query = supabase
         .from('audit_logs')
         .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(100);
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (filter.action !== 'all') {
         query = query.eq('action', filter.action);
       }
-      
-      const { data, error } = await query;
+
+      if (isIsoDate(filter.date)) {
+        // One Thai calendar day, midnight to midnight.
+        query = query
+          .gte('created_at', toBangkokTimestamp(filter.date, '00:00'))
+          .lt('created_at', toBangkokTimestamp(addDays(filter.date, 1), '00:00'));
+      }
+
+      const [{ data, error }, { data: users, error: usersError }] = await Promise.all([
+        query,
+        supabase.from('users').select('id, full_name, email'),
+      ]);
       if (error) throw error;
-      setLogs(data || []);
+      if (usersError) throw usersError;
+
+      const names = {};
+      (users || []).forEach((u) => { names[u.id] = u.full_name || u.email; });
+      setUserNames(names);
+
+      const needle = filter.user.trim().toLowerCase();
+      const rows = (data || []).filter((log) =>
+        !needle || (names[log.user_id] || '').toLowerCase().includes(needle)
+      );
+      setLogs(rows);
     } catch (error) {
-      console.error(error);
+      setLogs([]);
+      toast({ variant: 'destructive', title: t('common.error'), description: error.message });
     } finally {
       setLoading(false);
     }
@@ -138,10 +165,10 @@ const AuditLogPage = () => {
                     ) : logs.map((log) => (
                        <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                           <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
-                            {formatThaiDateTime(log.timestamp)}
+                            {formatThaiDateTime(log.created_at)}
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
-                             {log.user_id || 'System'}
+                             {userNames[log.user_id] || log.user_id || 'System'}
                           </td>
                           <td className="px-6 py-4 text-sm">
                              <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${

@@ -5,9 +5,14 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { usePermission } from '@/hooks/usePermission';
-import { exportToExcel, formatThaiDate, formatThaiTime, getThaiISODate } from '@/utils/helpers';
+import { exportToExcel, formatThaiDate, getThaiISODate } from '@/utils/helpers';
 import AccessDenied from '@/components/AccessDenied';
 import { fetchAllRows } from '@/services/queries';
+import { buildDateRange } from '@/lib/thaiTime';
+import { weekdayOf } from '@/lib/setup/setupPlan';
+import {
+  DEFAULT_POLICY, calculateDaily, findLeave, findOtRequest, getShiftByEmployee,
+} from '@/lib/attendance/dailyCalculation';
 
 const AttendanceCalculationPage = () => {
   const { t } = useTranslation();
@@ -31,7 +36,7 @@ const AttendanceCalculationPage = () => {
   };
 
   const handleCalculate = async () => {
-    if (!filters.dateFrom || !filters.dateTo) {
+    if (!filters.dateFrom || !filters.dateTo || filters.dateTo < filters.dateFrom) {
       toast({
         variant: 'destructive',
         title: t('common.error'),
@@ -45,7 +50,7 @@ const AttendanceCalculationPage = () => {
       // Attendance and leave are read page by page: a month of scans for even a
       // mid-sized company exceeds the 1000-row cap PostgREST applies, and it
       // truncates without raising an error.
-      const [employeeRes, shiftRes, assignmentRes, policyRes, holidayRes, leaveRes, attendanceRes, otRequestRes] = await Promise.all([
+      const [employeeRes, shiftRes, assignmentRes, policyRes, holidayRes, leaveRes, attendanceRes, otRequestRes, weekOffRes] = await Promise.all([
         // Paged reads need a stable sort, otherwise PostgREST is free to return
         // the same row on two pages and drop another entirely.
         fetchAllRows(() => supabase.from('employees').select('id, employee_id, name, name_th, department, position').eq('status', 'active').order('id')),
@@ -78,9 +83,11 @@ const AttendanceCalculationPage = () => {
             .gte('request_date', filters.dateFrom)
             .lte('request_date', filters.dateTo)
             .order('id')
-        )
+        ),
+        supabase.from('week_offs').select('weekday, department, employee_group')
       ]);
 
+      if (weekOffRes.error) throw weekOffRes.error;
       if (employeeRes.error) throw employeeRes.error;
       if (shiftRes.error) throw shiftRes.error;
       if (assignmentRes.error) throw assignmentRes.error;
@@ -90,11 +97,7 @@ const AttendanceCalculationPage = () => {
       if (attendanceRes.error) throw attendanceRes.error;
       if (otRequestRes.error) throw otRequestRes.error;
 
-      const policy = policyRes.data || {
-        late_grace_minutes: 5,
-        late_threshold_minutes: 5,
-        absent_by_late_minutes: 30
-      };
+      const policy = policyRes.data || DEFAULT_POLICY;
 
       const allEmployees = employeeRes.data || [];
       setEmployees(allEmployees);
@@ -131,6 +134,15 @@ const AttendanceCalculationPage = () => {
 
       const holidaySet = new Set(holidays.map((holiday) => holiday.holiday_date));
 
+      // Days off set for the whole organization, plus those of one department.
+      const weekOffs = weekOffRes.data || [];
+      const isWeeklyOff = (employee, date) => {
+        const weekday = weekdayOf(date);
+        return weekOffs.some(
+          (row) => row.weekday === weekday && !row.employee_group && (!row.department || row.department === employee.department)
+        );
+      };
+
       const dateRange = buildDateRange(filters.dateFrom, filters.dateTo);
 
       const rows = [];
@@ -147,16 +159,16 @@ const AttendanceCalculationPage = () => {
           const calculation = calculateDaily({
             log,
             date,
-            employee,
             shift,
             policy,
             holiday,
+            weeklyOff: isWeeklyOff(employee, date),
             leave,
             otRequest
           });
 
           rows.push({
-            date:  (date),
+            date,
             employeeId: employee.employee_id,
             name: employee.name,
             department: employee.department || '-',
@@ -277,7 +289,7 @@ const AttendanceCalculationPage = () => {
 
         {truncated && (
           <div className="rounded-xl border border-amber-300 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
-            {t('reports.truncated', { shown: calculated.length, total: calculated.length })}
+            {t('attendanceCalc.truncated')}
           </div>
         )}
 
@@ -332,170 +344,17 @@ const AttendanceCalculationPage = () => {
   );
 };
 
-const buildDateRange = (from, to) => {
-  const results = [];
-  const start = new Date(`${from}T00:00:00+07:00`);
-  const end = new Date(`${to}T00:00:00+07:00`);
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const iso = d.toISOString().split('T')[0];
-    results.push(iso);
-  }
-  return results;
-};
-
-const getShiftByEmployee = (employeeId, date, assignmentMap, shiftMap) => {
-  const assignments = assignmentMap.get(employeeId) || [];
-  const match = assignments.find((assignment) => {
-    const start = assignment.start_date;
-    const end = assignment.end_date || '9999-12-31';
-    return date >= start && date <= end;
-  });
-  return match ? shiftMap.get(match.shift_id) : null;
-};
-
+/**
+ * Display name of the shift an employee works on a date.
+ * @param {string} employeeId - Employee row id.
+ * @param {string} date - Work date, YYYY-MM-DD.
+ * @param {Map<string, Array<object>>} assignmentMap - Assignments grouped by employee id.
+ * @param {Map<string, object>} shiftMap - Shifts by id.
+ * @returns {string} Shift name, or '-' when none is assigned.
+ */
 const getShiftName = (employeeId, date, assignmentMap, shiftMap) => {
   const shift = getShiftByEmployee(employeeId, date, assignmentMap, shiftMap);
   return shift?.shift_name || '-';
-};
-
-const findLeave = (leaves, employeeId, date) => {
-  return leaves.find((leave) => {
-    if (leave.employee_id !== employeeId) return false;
-    if (leave.status !== 'approved') return false;
-    return date >= leave.start_date && date <= leave.end_date;
-  });
-};
-
-const calculateDaily = ({ log, date, employee, shift, policy, holiday, leave, otRequest }) => {
-  const checkIn = log?.check_in ? formatThaiTime(log.check_in) : '-';
-  const checkOut = log?.check_out ? formatThaiTime(log.check_out) : '-';
-  const checkInMorning = log?.check_in_morning ? formatThaiTime(log.check_in_morning) : '-';
-  const checkOutMorning = log?.check_out_morning ? formatThaiTime(log.check_out_morning) : '-';
-  const checkInAfternoon = log?.check_in_afternoon ? formatThaiTime(log.check_in_afternoon) : '-';
-  const checkOutAfternoon = log?.check_out_afternoon ? formatThaiTime(log.check_out_afternoon) : '-';
-  const otIn = log?.ot_in ? formatThaiTime(log.ot_in) : '-';
-  const otOut = log?.ot_out ? formatThaiTime(log.ot_out) : '-';
-  const missingPunch = log?.missing_punch || (log?.check_in && !log?.check_out) || (!log?.check_in && log?.check_out);
-
-  let workHours = '-';
-  let lateMinutes = 0;
-  let otMinutes = 0;
-  let status = 'absent';
-  let note = '';
-
-  if (leave) {
-    status = 'leave';
-    note = leave.reason || '';
-    return { checkIn, checkOut, workHours, lateMinutes, otMinutes, status, note };
-  }
-
-  if (holiday) {
-    status = 'holiday';
-    return { checkIn, checkOut, workHours, lateMinutes, otMinutes, status, note };
-  }
-
-  if (!log) {
-    status = 'absent';
-    note = 'no_scan';
-    return { checkIn, checkOut, workHours, lateMinutes, otMinutes, status, note };
-  }
-
-  if (missingPunch) {
-    status = 'missing_punch';
-  }
-
-  if (shift?.scan_policy === '4') {
-    const morningMinutes = diffMinutes(log?.check_in_morning, log?.check_out_morning);
-    const afternoonMinutes = diffMinutes(log?.check_in_afternoon, log?.check_out_afternoon);
-    const totalMinutes = morningMinutes + afternoonMinutes;
-    workHours = totalMinutes ? (totalMinutes / 60).toFixed(2) : '-';
-  } else if (shift?.scan_policy === '6') {
-    const morningMinutes = diffMinutes(log?.check_in_morning, log?.check_out_morning);
-    const afternoonMinutes = diffMinutes(log?.check_in_afternoon, log?.check_out_afternoon);
-    const totalMinutes = morningMinutes + afternoonMinutes;
-    workHours = totalMinutes ? (totalMinutes / 60).toFixed(2) : '-';
-  } else if (log?.check_in && log?.check_out) {
-    const diff = Math.max(0, Math.round((new Date(log.check_out) - new Date(log.check_in)) / 60000));
-    const breakMinutes = shift?.break_minutes || 0;
-    const workMinutes = Math.max(0, diff - breakMinutes);
-    workHours = (workMinutes / 60).toFixed(2);
-  }
-  
-  if (shift && (log?.check_in || log?.check_in_morning)) {
-    const start = buildShiftDateTime(date, shift.start_time);
-    const checkInTime = log?.check_in_morning ? new Date(log.check_in_morning) : new Date(log.check_in);
-    const lateDiff = Math.round((checkInTime - start) / 60000);
-    if (lateDiff > policy.late_grace_minutes) {
-      lateMinutes = lateDiff;
-      if (lateDiff >= policy.absent_by_late_minutes) {
-        status = 'absent_by_late';
-      } else if (!missingPunch) {
-        status = 'late';
-      }
-    } else if (!missingPunch) {
-      status = 'normal';
-    }
-  }
-
-  if (policy.ot_method === 'request') {
-    if (otRequest) {
-      otMinutes = Number(otRequest.minutes || 0);
-    }
-  } else if (shift && (log?.check_out || log?.ot_out)) {
-    const end = buildShiftDateTime(date, shift.end_time, shift.cross_day_shift);
-    const checkOutTime = log?.ot_out ? new Date(log.ot_out) : new Date(log.check_out);
-    const otDiff = Math.round((checkOutTime - end) / 60000);
-    if (otDiff > 0) {
-      otMinutes = otDiff;
-    }
-  }
-
-  if (shift?.scan_policy === '4') {
-    return {
-      checkIn: `${checkInMorning} / ${checkInAfternoon}`,
-      checkOut: `${checkOutMorning} / ${checkOutAfternoon}`,
-      workHours,
-      lateMinutes,
-      otMinutes,
-      status,
-      note
-    };
-  }
-
-  if (shift?.scan_policy === '6') {
-    return {
-      checkIn: `${checkInMorning} / ${checkInAfternoon} / ${otIn}`,
-      checkOut: `${checkOutMorning} / ${checkOutAfternoon} / ${otOut}`,
-      workHours,
-      lateMinutes,
-      otMinutes,
-      status,
-      note
-    };
-  }
-
-  return { checkIn, checkOut, workHours, lateMinutes, otMinutes, status, note };
-};
-
-const buildShiftDateTime = (date, time, crossDay = false) => {
-  if (!time) return new Date(`${date}T00:00:00+07:00`);
-  const base = new Date(`${date}T${time}+07:00`);
-  if (crossDay) {
-    const nextDay = new Date(base);
-    nextDay.setDate(nextDay.getDate() + 1);
-    return nextDay;
-  }
-  return base;
-};
-
-const diffMinutes = (start, end) => {
-  if (!start || !end) return 0;
-  const diff = Math.round((new Date(end) - new Date(start)) / 60000);
-  return Math.max(diff, 0);
-};
-
-const findOtRequest = (requests, employeeId, date) => {
-  return requests.find((req) => req.employee_id === employeeId && req.request_date === date);
 };
 
 export default AttendanceCalculationPage;

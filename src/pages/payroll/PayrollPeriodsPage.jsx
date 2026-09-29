@@ -215,7 +215,7 @@ const PayrollPeriodsPage = () => {
                 <SelectContent>
                   <SelectItem value="all">ทั้งหมด</SelectItem>
                   <SelectItem value={VALID_STATUSES.DRAFT}>ร่าง (Draft)</SelectItem>
-                  <SelectItem value={VALID_STATUSES.ACTIVE}>ใช้งาน (Active)</SelectItem>
+                  <SelectItem value={VALID_STATUSES.OPEN}>เปิดใช้งาน (Open)</SelectItem>
                   <SelectItem value={VALID_STATUSES.CLOSED}>ปิด (Closed)</SelectItem>
                 </SelectContent>
               </Select>
@@ -310,17 +310,23 @@ const PayrollPeriodsPage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditModal(period)}>
-                              <Edit className="w-4 h-4 mr-2" /> {t('common.edit')}
-                            </DropdownMenuItem>
-                            {normalizeStatus(period.status) !== VALID_STATUSES.CLOSED && (
-                                <DropdownMenuItem onClick={() => { setSelectedPeriod(period); setIsCloseModalOpen(true); }}>
-                                    <Lock className="w-4 h-4 mr-2" /> ปิดงวด
+                            {normalizeStatus(period.status) === VALID_STATUSES.CLOSED ? (
+                                <DropdownMenuItem disabled>
+                                    <Lock className="w-4 h-4 mr-2" /> {t('payroll.periodLocked')}
                                 </DropdownMenuItem>
+                            ) : (
+                                <>
+                                    <DropdownMenuItem onClick={() => openEditModal(period)}>
+                                      <Edit className="w-4 h-4 mr-2" /> {t('common.edit')}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => { setSelectedPeriod(period); setIsCloseModalOpen(true); }}>
+                                        <Lock className="w-4 h-4 mr-2" /> ปิดงวด
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => setDeleteConfirmation({ isOpen: true, id: period.id })}>
+                                      <Trash2 className="w-4 h-4 mr-2" /> {t('common.delete')}
+                                    </DropdownMenuItem>
+                                </>
                             )}
-                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => setDeleteConfirmation({ isOpen: true, id: period.id })}>
-                              <Trash2 className="w-4 h-4 mr-2" /> {t('common.delete')}
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>

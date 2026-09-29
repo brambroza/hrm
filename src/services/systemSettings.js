@@ -22,11 +22,13 @@ export const systemSettingsService = {
 
     const orgId = userData.organization_id;
 
-    // 3. Try to fetch settings for this org
+    // 3. Try to fetch settings for this org.
+    // Migration 0001 renamed org_id to organization_id; the old name matched no
+    // row, so a duplicate insert was attempted on every page load.
     const { data, error } = await supabase
       .from('system_settings')
       .select('*')
-      .eq('org_id', orgId)
+      .eq('organization_id', orgId)
       .maybeSingle();
 
     if (error) throw error;
@@ -36,7 +38,7 @@ export const systemSettingsService = {
 
     // 5. If no settings exist, create default record
     const defaultSettings = {
-      org_id: orgId,
+      organization_id: orgId,
       notification_email: true,
       notification_sms: false,
       notification_in_app: true,
@@ -76,17 +78,17 @@ export const systemSettingsService = {
     } 
     
     // Fallback: If no ID provided (rare, as getSystemSettings ensures creation),
-    // try to find by org_id or create new.
+    // try to find by organization_id or create new.
     const { data: { user } } = await supabase.auth.getUser();
     const { data: userData } = await supabase.from('users').select('organization_id').eq('id', user.id).single();
     
     if (!userData?.organization_id) throw new Error('No organization ID found');
 
-    // Check if exists by org_id to avoid duplicates if ID was missing in frontend state
+    // Check if exists by organization_id to avoid duplicates if ID was missing in frontend state
     const { data: existing } = await supabase
       .from('system_settings')
       .select('id')
-      .eq('org_id', userData.organization_id)
+      .eq('organization_id', userData.organization_id)
       .maybeSingle();
 
     if (existing) {
@@ -99,7 +101,7 @@ export const systemSettingsService = {
       if (error) throw error;
       return data;
     } else {
-      const payload = { ...settings, org_id: userData.organization_id };
+      const payload = { ...settings, organization_id: userData.organization_id };
       const { data, error } = await supabase
         .from('system_settings')
         .insert([payload])

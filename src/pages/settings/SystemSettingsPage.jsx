@@ -15,6 +15,7 @@ import { systemSettingsService } from '@/services/systemSettings';
 import { useApi } from '@/hooks/useApi';
 import { useForm } from '@/hooks/useForm';
 import AccessDenied from '@/components/AccessDenied';
+import SetupHint from '@/components/SetupHint';
 
 const SystemSettingsPage = () => {
   const { t } = useTranslation();
@@ -104,6 +105,7 @@ const SystemSettingsPage = () => {
       </Helmet>
       
       <div className="space-y-6 max-w-4xl mx-auto">
+        <SetupHint />
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('settings.systemConfig')}</h1>

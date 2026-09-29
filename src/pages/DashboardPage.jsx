@@ -1,6 +1,8 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
+import SetupBanner from '@/components/SetupBanner';
+import { fetchAllRows } from '@/services/queries';
 import { Helmet } from 'react-helmet';
 import { Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -49,6 +51,7 @@ const DashboardPage = () => {
   const { canView } = usePermission();
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [stats, setStats] = useState({ totalEmployees: 0, present: 0, absent: 0, onLeave: 0 });
   const [chartData, setChartData] = useState([]);
   const [recentLeaves, setRecentLeaves] = useState([]);
@@ -70,6 +73,7 @@ const DashboardPage = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const today = getThaiISODate();
       const chartStart = shiftDate(today, -(CHART_DAYS - 1));
@@ -80,23 +84,36 @@ const DashboardPage = () => {
         await Promise.all([
           // Everything below is derived from this one employee list, so it is
           // fetched in full rather than counted, and reused several times.
-          supabase
-            .from('employees')
-            .select('id, name, name_th, department, photo_url, start_date, work_permit_expiry')
-            .eq('status', 'active'),
+          // Read page by page: a plain select stops at 1,000 rows without an
+          // error, which a week of scans passes at roughly 140 employees.
+          fetchAllRows(() =>
+            supabase
+              .from('employees')
+              .select('id, name, name_th, department, photo_url, start_date, work_permit_expiry')
+              .eq('status', 'active')
+              .order('id')
+          ),
 
-          supabase
-            .from('attendance_logs')
-            .select('employee_id, log_date, status')
-            .gte('log_date', chartStart)
-            .lte('log_date', today),
+          fetchAllRows(() =>
+            supabase
+              .from('attendance_logs')
+              .select('employee_id, log_date, status')
+              .gte('log_date', chartStart)
+              .lte('log_date', today)
+              .order('log_date')
+              .order('employee_id')
+              .order('id')
+          ),
 
-          supabase
-            .from('leaves')
-            .select('employee_id, start_date, end_date')
-            .eq('status', 'approved')
-            .lte('start_date', today)
-            .gte('end_date', chartStart),
+          fetchAllRows(() =>
+            supabase
+              .from('leaves')
+              .select('employee_id, start_date, end_date')
+              .eq('status', 'approved')
+              .lte('start_date', today)
+              .gte('end_date', chartStart)
+              .order('id')
+          ),
 
           supabase
             .from('leaves')
@@ -121,7 +138,10 @@ const DashboardPage = () => {
             .eq('is_working_day', false),
         ]);
 
-      if (employeeRes.error) throw employeeRes.error;
+      // Every read feeds a number on the page; a failed one must not be shown as zero.
+      const failed = [employeeRes, attendanceRes, leaveRes, recentLeaveRes, pendingLeaveRes, pendingOtRes, holidayRes]
+        .find((res) => res.error);
+      if (failed) throw failed.error;
 
       const employees = employeeRes.data || [];
       const attendance = attendanceRes.data || [];
@@ -208,6 +228,7 @@ const DashboardPage = () => {
       setMilestones([...joinedThisMonth, ...anniversaries].sort((a, b) => a.date.localeCompare(b.date)));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setLoadError(error.message || String(error));
     } finally {
       setLoading(false);
     }
@@ -229,6 +250,12 @@ const DashboardPage = () => {
       </Helmet>
 
       <div className="space-y-6">
+        <SetupBanner />
+        {loadError && (
+          <div role="alert" className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+            {t('dashboard.loadFailed')} ({loadError})
+          </div>
+        )}
         {isHoliday && (
           <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-900/10 px-4 py-3 text-sm text-blue-700 dark:text-blue-300">
             {t('dashboard.todayIsHoliday')}

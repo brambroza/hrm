@@ -1,6 +1,26 @@
 
 import { supabase } from '@/lib/customSupabaseClient';
-import { normalizeStatus, VALID_STATUSES } from '@/utils/statusValidator';
+import { normalizeStatus, VALID_STATUSES, isPeriodClosed, CLOSED_PERIOD_MESSAGE } from '@/utils/statusValidator';
+
+/**
+ * Refuse to continue when a period is closed.
+ * A database trigger (migration 0006) enforces the same rule; this check gives
+ * the user a clear message before the request is sent.
+ * @param {string} id - Payroll period id.
+ * @returns {Promise<void>}
+ * @throws {Error} When the period is closed or cannot be read.
+ */
+export const assertPeriodOpen = async (id) => {
+  const { data, error } = await supabase
+    .from('payroll_periods')
+    .select('status')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('ไม่พบงวดการจ่ายนี้');
+  if (isPeriodClosed(data.status)) throw new Error(CLOSED_PERIOD_MESSAGE);
+};
 
 export const getPayrollPeriods = async () => {
   console.log('[Service] getPayrollPeriods: Fetching all periods...');
@@ -41,6 +61,12 @@ export const addPayrollPeriod = async (periodData) => {
     if (!name || !start_date || !end_date) {
       throw new Error('Missing required fields: name, start_date, or end_date');
     }
+    if (end_date < start_date) {
+      throw new Error('วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น');
+    }
+    if (normalizeStatus(status) === VALID_STATUSES.CLOSED) {
+      throw new Error('สร้างงวดใหม่ในสถานะปิดไม่ได้');
+    }
 
     // 3. Normalize Status
     const normalizedStatus = normalizeStatus(status);
@@ -77,8 +103,14 @@ export const addPayrollPeriod = async (periodData) => {
 export const updatePayrollPeriod = async (id, updates) => {
   console.log(`[Service] updatePayrollPeriod: Updating ID ${id} with:`, updates);
   try {
+    await assertPeriodOpen(id);
+
     const { name, start_date, end_date, status } = updates;
     const payload = {};
+
+    if (start_date && end_date && end_date < start_date) {
+      throw new Error('วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น');
+    }
 
     if (name) payload.name = name;
     if (start_date) payload.start_date = start_date;
@@ -86,7 +118,11 @@ export const updatePayrollPeriod = async (id, updates) => {
     
     if (status) {
       const normalized = normalizeStatus(status);
-      console.log(`[Service] updatePayrollPeriod: Status normalized from '${status}' to '${normalized}'`);
+      // Closing goes through closePayrollPeriod so it cannot happen as a side
+      // effect of editing a name or a date.
+      if (normalized === VALID_STATUSES.CLOSED) {
+        throw new Error('การปิดงวดต้องทำผ่านคำสั่งปิดงวด');
+      }
       payload.status = normalized;
     }
 
@@ -112,6 +148,8 @@ export const updatePayrollPeriod = async (id, updates) => {
 export const deletePayrollPeriod = async (id) => {
   console.log(`[Service] deletePayrollPeriod: Deleting ID ${id}`);
   try {
+    await assertPeriodOpen(id);
+
     const { error } = await supabase
       .from('payroll_periods')
       .delete()

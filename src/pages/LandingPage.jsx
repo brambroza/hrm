@@ -6,24 +6,27 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   ArrowRight, Check, ChevronDown, Users, Clock, Timer, CalendarDays, Wallet,
   FileBarChart, Building2, ShieldCheck, Sparkles, Phone, Mail, LineChart, Zap,
-  Sliders, TrendingDown, Server, Plus, ShieldQuestion,
+  Sliders, TrendingDown, Server, Plus, ShieldQuestion, ListChecks, FileUp, Scale, Minus,
 } from 'lucide-react';
 import ProductMock from '@/components/landing/ProductMock';
 import {
-  STATS, WEDGES, COST_COMPARE, PAINS, MODULES, FLOW, CORE, RULE_PACKS, EXAMPLE_BUILDS, FAQS,
+  STATS, WEDGES, PAINS, MODULES, FLOW, CORE, RULE_PACKS, EXAMPLE_BUILDS, FAQS, DAILY_STEPS, TOUR, COMPARE,
 } from '@/components/landing/data';
 
 gsap.registerPlugin(ScrollTrigger);
 
 /** Icon lookup so module data can stay serialisable. */
-const ICONS = { Users, Clock, Timer, CalendarDays, Wallet, FileBarChart, Building2, ShieldCheck, Sliders, TrendingDown, Server };
+const ICONS = {
+  Users, Clock, Timer, CalendarDays, Wallet, FileBarChart, Building2, ShieldCheck, Sliders, TrendingDown, Server,
+  ListChecks, FileUp, Scale,
+};
 
 /** Anchor targets used by the sticky nav. */
 const NAV_LINKS = [
+  { href: '#tour', label: 'ดูหน้าจอ' },
   { href: '#why', label: 'ต่างยังไง' },
-  { href: '#compare', label: 'เทียบค่าใช้จ่าย' },
+  { href: '#versus', label: 'เทียบกับระบบเช่าใช้' },
   { href: '#modules', label: 'ฟีเจอร์' },
-  { href: '#tour', label: 'ตัวอย่างหน้าจอ' },
   { href: '#pricing', label: 'ราคา' },
   { href: '#faq', label: 'คำถามที่พบบ่อย' },
 ];
@@ -88,18 +91,9 @@ const LandingPage = () => {
   const root = useRef(null);
   const heroMockRef = useRef(null);
   const tourMockRef = useRef(null);
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState(TOUR[0].id);
+  const activeTour = TOUR.find((item) => item.id === tab) || TOUR[0];
   const [openFaq, setOpenFaq] = useState(0);
-  const [calcIdx, setCalcIdx] = useState(1);
-  const saasRef = useRef(null);
-  const oursRef = useRef(null);
-  const saveRef = useRef(null);
-
-  const calc = COST_COMPARE.options[calcIdx];
-  /** Three-year cost of a per-head SaaS at the assumed market rate. */
-  const saas3y = calc.headcount * COST_COMPARE.saasPerHead * 36;
-  /** Three-year cost of owning the system: one-off project plus monthly care. */
-  const ours3y = calc.project + calc.ma * 36;
 
   useLayoutEffect(() => {
     const ctx = gsap.context((self) => {
@@ -155,6 +149,9 @@ const LandingPage = () => {
         gsap.utils.toArray('.counter').forEach((el) => {
           const target = Number(el.dataset.value);
           const proxy = { v: 0 };
+          // The markup holds the real figure, so it is correct without
+          // animation. Only when motion is allowed does it count up from 0.
+          el.textContent = '0';
           gsap.to(proxy, {
             v: target,
             duration: 1.6,
@@ -168,16 +165,6 @@ const LandingPage = () => {
 
         /* ---- looping keyword marquee ---- */
         gsap.to('.marquee-track', { xPercent: -50, duration: 26, ease: 'none', repeat: -1 });
-
-        /* ---- mock chart bars grow on view ---- */
-        gsap.from('.mock-bar', {
-          scaleY: 0,
-          transformOrigin: 'bottom center',
-          duration: 0.9,
-          ease: 'power3.out',
-          stagger: 0.05,
-          scrollTrigger: { trigger: '.hero', start: 'top 70%' },
-        });
       });
 
       /* ---- pinned horizontal flow (desktop only) ---- */
@@ -214,28 +201,6 @@ const LandingPage = () => {
     return () => ctx.revert();
   }, []);
 
-  /** Counts the cost-comparison figures up whenever the headcount option changes. */
-  useLayoutEffect(() => {
-    const targets = [
-      [saasRef.current, saas3y],
-      [oursRef.current, ours3y],
-      [saveRef.current, saas3y - ours3y],
-    ];
-    const tweens = targets.map(([el, value]) => {
-      if (!el) return null;
-      const proxy = { v: 0 };
-      return gsap.to(proxy, {
-        v: value,
-        duration: 0.9,
-        ease: 'power2.out',
-        onUpdate: () => {
-          el.textContent = Math.round(proxy.v).toLocaleString('th-TH');
-        },
-      });
-    });
-    return () => tweens.forEach((t) => t && t.kill());
-  }, [saas3y, ours3y]);
-
   /** Animates the tour screenshot whenever the active module tab changes. */
   useLayoutEffect(() => {
     if (!tourMockRef.current) return;
@@ -250,10 +215,10 @@ const LandingPage = () => {
   return (
     <div ref={root} className="min-h-screen bg-[#f7faf9] text-slate-700 antialiased">
       <Helmet>
-        <title>ระบบบริหารงานบุคคล HRM สำหรับธุรกิจไทย | เวลาทำงาน OT การลา เงินเดือน</title>
+        <title>ระบบเงินเดือนและเวลาทำงานที่เป็นของคุณ | ติดตั้งในเครื่องของบริษัท เชื่อมระบบที่มีอยู่</title>
         <meta
           name="description"
-          content="ระบบ HRM ครบวงจรสำหรับ SME ไทย จัดการทะเบียนพนักงาน เวลาเข้า-ออก กะทำงาน OT การลา และเงินเดือน คำนวณตามกฎหมายแรงงานไทย ใช้งานภาษาไทยและอังกฤษ"
+          content="ระบบเวลาทำงานและเงินเดือนแบบโครงการเหมาจ่าย สำหรับโรงงานและธุรกิจหลายกะ ติดตั้งบนเซิร์ฟเวอร์ของบริษัทได้ เชื่อมระบบการผลิตและ ERP ส่งมอบซอร์สโค้ด และเดินคู่ขนานก่อนใช้จริง"
         />
         <style>{`
           html { scroll-behavior: smooth; }
@@ -318,19 +283,19 @@ const LandingPage = () => {
           <div className="mx-auto max-w-4xl text-center">
             <span className="hero-badge inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs text-slate-600">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              สำหรับโรงงานและธุรกิจหลายกะ ตั้งแต่ 100 คนขึ้นไป
+              สำหรับโรงงานและธุรกิจหลายกะ ที่ต้องการเป็นเจ้าของระบบเอง
             </span>
 
             <h1 className="mt-6 text-4xl font-bold leading-[1.15] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
-              {splitWords('กฎกะและ OT ของคุณซับซ้อนแค่ไหน')}
+              {splitWords('ระบบเงินเดือนที่เป็นของคุณ')}
               <br className="hidden sm:block" />
-              {splitWords('ระบบก็คิดตามนั้น', 'text-gradient')}
+              {splitWords('อยู่ในเครื่องของคุณ', 'text-gradient')}
             </h1>
 
             <p className="hero-fade mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-500 sm:text-lg">
-              ระบบ HRM ที่สร้างสูตรเวลาและค่าจ้างตามระเบียบบริษัทคุณจริง ๆ ไม่ใช่ให้คุณแก้ระเบียบตามระบบ
-              กะหมุนข้ามคืน ค่ากะแยกช่วงเวลา เบี้ยขยันมีเงื่อนไข รายวันปนเหมาชิ้น — คิดได้หมด
-              จ่ายเป็นโครงการครั้งเดียว ไม่คิดรายหัวต่อเดือน
+              ติดตั้งบนเซิร์ฟเวอร์ของบริษัทได้ เชื่อมกับระบบการผลิตและ ERP ที่คุณมีอยู่
+              ตั้งสูตรตามระเบียบการทำงานของคุณ และทุกยอดกดดูที่มาได้
+              จ่ายเป็นโครงการครั้งเดียว ส่งมอบซอร์สโค้ด
             </p>
 
             <div className="hero-fade mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -345,17 +310,87 @@ const LandingPage = () => {
                 href="#tour"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 sm:w-auto"
               >
-                ดูตัวอย่างหน้าจอ
+                ลองกดหน้าจอดู
               </a>
             </div>
 
             <p className="hero-fade mt-4 text-xs text-slate-400">
-              คำนวณเงินเดือนจากไฟล์จริงของคุณให้ดูใน 3 วัน · ตัวเลขไม่ตรง ไม่คิดเงิน · เริ่มต้น 120,000 บาท
+              เดินคู่ขนานกับวิธีเดิม 1 งวดก่อนใช้จริง · รับประกัน 3 เดือน · โครงการเริ่มต้น 245,000 บาท
             </p>
           </div>
 
           <div ref={heroMockRef} className="mx-auto mt-14 max-w-5xl [perspective:1200px]">
-            <ProductMock variant="dashboard" />
+            <ProductMock variant="inbox" />
+            <p className="mt-3 text-center text-xs text-slate-500">
+              หน้าแรกของฝ่ายบุคคล: พนักงาน 250 คน เหลือ 14 รายการที่ต้องตัดสินใจ ลองกดตัวกรองและติ๊กเลือกได้
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- DAILY WORK ---------------- */}
+      <section id="daily" className="mx-auto max-w-7xl px-5 pt-20">
+        <SectionHead
+          eyebrow="งานประจำวันของฝ่ายบุคคล"
+          title="สามขั้น แล้วจบ"
+          sub="เราออกแบบจากงานที่ทำทุกวัน ไม่ใช่จากรายการฟีเจอร์ สิ่งที่ระบบหาเองได้ ระบบไม่ถามคุณ"
+        />
+        <ol className="stagger-group mt-10 grid gap-4 md:grid-cols-3">
+          {DAILY_STEPS.map((d) => (
+            <li key={d.step} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-700 text-base font-semibold text-white">{d.step}</span>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">{d.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{d.desc}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* ---------------- TOUR ---------------- */}
+      <section id="tour" className="mx-auto max-w-7xl px-5 py-20">
+        <SectionHead
+          eyebrow="ดูหน้าจอ"
+          title="หน้าจอที่ฝ่ายบุคคลใช้ทุกวัน"
+          sub="กดได้จริง ลองกรองรายการ ติ๊กเลือก หรือสลับกะในตาราง ตัวเลขเป็นข้อมูลตัวอย่าง หน้าจอจริงตั้งค่าตามกฎและข้อมูลของบริษัทคุณ"
+        />
+
+        <div className="reveal mt-10 flex flex-wrap justify-center gap-2" role="tablist" aria-label="หน้าจอ">
+          {TOUR.map((item) => {
+            const Icon = ICONS[item.icon];
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === item.id}
+                onClick={() => setTab(item.id)}
+                className={`inline-flex min-h-[44px] items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition-all ${
+                  tab === item.id
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-900'
+                    : 'border-slate-200 bg-white text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 grid items-start gap-8 lg:grid-cols-3">
+          <div className="reveal lg:pt-6">
+            <h3 className="text-2xl font-semibold leading-snug text-slate-900">{activeTour.headline}</h3>
+            <ul className="mt-5 space-y-3">
+              {activeTour.points.map((point) => (
+                <li key={point} className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-600">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div ref={tourMockRef} className="lg:col-span-2">
+            <ProductMock variant={tab} />
           </div>
         </div>
       </section>
@@ -365,7 +400,7 @@ const LandingPage = () => {
         <div className="marquee-track flex w-max gap-10 whitespace-nowrap">
           {[...Array(2)].map((_, dup) => (
             <div key={dup} className="flex gap-10">
-              {['ทะเบียนพนักงาน', 'กะทำงาน', 'OT 1.5x / 3x', 'โควตาวันลา', 'ประกันสังคม', 'ภ.ง.ด.1', 'สลิปเงินเดือน PDF', 'รายงาน Excel', 'Audit Log', 'ไทย / English'].map((w) => (
+              {['ติดตั้งในเครื่องของบริษัท', 'ส่งมอบซอร์สโค้ด', 'เชื่อมระบบการผลิต', 'เชื่อม ERP', 'กะหมุนเวียน', 'ค่าแรงเหมาชิ้น', 'ที่มาของทุกยอด', 'เดินคู่ขนานก่อนใช้จริง', 'ราคาเหมาจ่าย', 'ไทย / English'].map((w) => (
                 <span key={w + dup} className="flex items-center gap-2 text-sm text-slate-400">
                   <span className="h-1 w-1 rounded-full bg-emerald-400" />
                   {w}
@@ -382,11 +417,11 @@ const LandingPage = () => {
           {STATS.map((s) => (
             <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
               <div className="flex items-baseline gap-1 text-4xl font-bold text-slate-900">
-                <span className="counter" data-value={s.value}>0</span>
+                <span className="counter" data-value={s.value}>{s.value.toLocaleString('th-TH')}</span>
                 <span className="text-gradient text-2xl font-semibold">{s.suffix}</span>
               </div>
               <div className="mt-2 text-sm font-medium text-slate-700">{s.label}</div>
-              <div className="mt-1 text-xs text-slate-400">{s.note}</div>
+              <div className="mt-1 text-xs text-slate-500">{s.note}</div>
             </div>
           ))}
         </div>
@@ -395,9 +430,9 @@ const LandingPage = () => {
       {/* ---------------- PAIN / FIX ---------------- */}
       <section className="mx-auto max-w-7xl px-5 py-20">
         <SectionHead
-          eyebrow="ปัญหาที่เจอทุกเดือน"
-          title="ถ้ายังทำ HR ด้วย Excel ต้นทุนที่มองไม่เห็นสูงกว่าที่คิด"
-          sub="ทุกชั่วโมงที่ HR ใช้กระทบยอดเวลาเข้า-ออก คือชั่วโมงที่หายไปจากงานดูแลคน และทุกความผิดพลาดเรื่องเงินคือความไว้ใจที่หายไป"
+          eyebrow="เราเหมาะกับใคร"
+          title="ถ้าคุณเจอข้อใดข้อหนึ่งในนี้ เราควรคุยกัน"
+          sub="ถ้าไม่เจอสักข้อ ระบบ HR แบบเช่าใช้รายเดือนน่าจะคุ้มกว่าสำหรับคุณ และเราจะบอกแบบนั้นตรง ๆ"
         />
         <div className="stagger-group mt-12 grid gap-4 md:grid-cols-2">
           {PAINS.map((p) => (
@@ -425,9 +460,9 @@ const LandingPage = () => {
       {/* ---------------- WHY DIFFERENT ---------------- */}
       <section id="why" className="mx-auto max-w-7xl px-5 py-20">
         <SectionHead
-          eyebrow="จุดที่ระบบสำเร็จรูปไปต่อไม่ได้"
-          title="ถ้ากฎบริษัทคุณเข้าช่องของระบบสำเร็จรูปได้ ใช้ของเขาคุ้มกว่า"
-          sub="เราพูดตรง ๆ แบบนั้น เพราะเรามีที่ยืนเฉพาะตอนที่กฎของคุณไม่เข้าช่อง และสามเรื่องข้างล่างคือจุดที่ลูกค้าเปลี่ยนมาหาเราจริง"
+          eyebrow="สิ่งที่คุณได้จากการเป็นเจ้าของระบบ"
+          title="ของคุณ ในเครื่องของคุณ เชื่อมกับระบบของคุณ"
+          sub="สามเรื่องนี้มาจากรูปแบบการส่งมอบแบบโครงการ ไม่ใช่จากจำนวนฟีเจอร์"
         />
         <div className="stagger-group mt-12 grid gap-5 lg:grid-cols-3">
           {WEDGES.map((w) => {
@@ -446,81 +481,49 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ---------------- COST COMPARISON ---------------- */}
-      <section id="compare" className="mx-auto max-w-7xl px-5 py-20">
+      {/* ---------------- VERSUS ---------------- */}
+      <section id="versus" className="mx-auto max-w-5xl px-5 py-20">
         <SectionHead
-          eyebrow="เทียบค่าใช้จ่าย 3 ปี"
-          title="ระบบคิดรายหัว ถูกกว่าตอนเริ่ม แพงกว่าตอนบริษัทโต"
-          sub="เลือกขนาดองค์กรของคุณเพื่อดูค่าใช้จ่ายรวม 3 ปี เทียบระหว่างระบบที่คิดรายหัวรายเดือน กับการเป็นเจ้าของระบบเอง"
+          eyebrow="เทียบกับระบบเช่าใช้รายเดือน"
+          title="ต่างกันที่รูปแบบ ไม่ใช่ที่จำนวนฟีเจอร์"
+          sub="เราใส่ข้อที่ระบบเช่าใช้ดีกว่าไว้ด้วย เพื่อให้คุณตัดสินใจจากข้อมูลครบ"
         />
-
-        <div className="reveal mt-10 flex flex-wrap justify-center gap-2">
-          {COST_COMPARE.options.map((o, i) => (
-            <button
-              key={o.headcount}
-              type="button"
-              onClick={() => setCalcIdx(i)}
-              className={`rounded-xl border px-5 py-2.5 text-sm transition-all ${
-                calcIdx === i
-                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                  : 'border-slate-200 bg-white text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {o.headcount} คน
-            </button>
+        <div className="reveal mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+          <div className="hidden grid-cols-3 gap-4 border-b border-slate-200 bg-slate-50 px-6 py-3 text-sm font-semibold text-slate-700 md:grid">
+            <span>เรื่อง</span>
+            <span>ระบบเช่าใช้รายเดือน</span>
+            <span className="text-emerald-800">HRM Suite</span>
+          </div>
+          {COMPARE.map((row) => (
+            <div key={row.topic} className="grid gap-x-4 gap-y-1 border-b border-slate-100 px-6 py-4 last:border-b-0 md:grid-cols-3">
+              <span className="text-sm font-medium text-slate-900">{row.topic}</span>
+              <span className="flex items-start gap-2 text-sm leading-relaxed text-slate-600">
+                {row.better === 'theirs'
+                  ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" aria-label="ข้อได้เปรียบ" />
+                  : <Minus className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />}
+                <span><span className="md:hidden">ระบบเช่าใช้: </span>{row.theirs}</span>
+              </span>
+              <span className={`flex items-start gap-2 text-sm leading-relaxed ${row.better === 'ours' ? 'font-medium text-slate-900' : 'text-slate-600'}`}>
+                {row.better === 'ours'
+                  ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-label="ข้อได้เปรียบ" />
+                  : <Minus className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />}
+                <span><span className="md:hidden">HRM Suite: </span>{row.ours}</span>
+              </span>
+            </div>
           ))}
         </div>
-
-        <div className="reveal mx-auto mt-8 grid max-w-4xl gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm shadow-slate-200/60">
-            <div className="text-sm text-slate-500">ระบบคิดรายหัว</div>
-            <div className="mt-2 flex items-baseline gap-1">
-              <span ref={saasRef} className="text-4xl font-bold text-slate-900">0</span>
-              <span className="text-sm text-slate-400">บาท / 3 ปี</span>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-slate-400">
-              คิดที่ {COST_COMPARE.saasPerHead} บาท/คน/เดือน × {calc.headcount} คน × 36 เดือน และจ่ายต่อไปเรื่อย ๆ ไม่มีวันจบ
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-emerald-300 bg-gradient-to-b from-emerald-50 to-white p-7 shadow-sm shadow-emerald-200/70">
-            <div className="text-sm text-emerald-700">เป็นเจ้าของระบบเอง</div>
-            <div className="mt-2 flex items-baseline gap-1">
-              <span ref={oursRef} className="text-4xl font-bold text-slate-900">0</span>
-              <span className="text-sm text-slate-400">บาท / 3 ปี</span>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              โครงการ {calc.project.toLocaleString('th-TH')} บาท ครั้งเดียว + ค่าดูแล {calc.ma.toLocaleString('th-TH')} บาท/เดือน · {calc.note}
-            </p>
-          </div>
-        </div>
-
-        <div className="reveal mx-auto mt-4 max-w-4xl rounded-2xl border border-slate-200 bg-white px-7 py-5 text-center shadow-sm shadow-slate-200/60">
-          {saas3y - ours3y > 0 ? (
-            <p className="text-sm text-slate-600">
-              ที่ {calc.headcount} คน ประหยัดได้ประมาณ{' '}
-              <span ref={saveRef} className="text-lg font-semibold text-emerald-600">0</span> บาท ใน 3 ปี
-              และส่วนต่างจะกว้างขึ้นทุกปีที่พนักงานเพิ่ม
-            </p>
-          ) : (
-            <p className="text-sm text-slate-600">
-              ที่ {calc.headcount} คน ระบบรายหัวยังถูกกว่าประมาณ{' '}
-              <span ref={saveRef} className="text-lg font-semibold text-slate-700">0</span> บาท ใน 3 ปี —
-              ถ้ากฎเวลาและค่าจ้างของคุณไม่ซับซ้อน เราจะแนะนำให้ใช้ระบบสำเร็จรูปตรง ๆ
-            </p>
-          )}
-          <p className="mt-2 text-xs text-slate-400">
-            ตัวเลขฝั่งระบบรายหัวเป็นค่ากลางของตลาดที่ {COST_COMPARE.saasPerHead} บาท/คน/เดือน ใช้ราคาจริงของผู้ให้บริการที่คุณกำลังเทียบแทนได้
-          </p>
-        </div>
+        <p className="reveal mt-4 text-center text-xs leading-relaxed text-slate-500">
+          เปรียบเทียบตามรูปแบบการให้บริการโดยทั่วไป ผู้ให้บริการแต่ละรายต่างกัน กรุณาสอบถามรายที่คุณกำลังพิจารณา
+          ถ้าระบบเช่าใช้ตอบโจทย์คุณได้ ควรใช้ระบบนั้น
+        </p>
       </section>
 
       {/* ---------------- MODULES ---------------- */}
       <section id="modules" className="mx-auto max-w-7xl px-5 py-20">
         <SectionHead
-          eyebrow="8 โมดูลในระบบเดียว"
-          title="ครบตั้งแต่วันแรกที่พนักงานเข้า จนถึงสลิปใบสุดท้าย"
-          sub="ทุกโมดูลใช้ฐานข้อมูลพนักงานชุดเดียวกัน แก้ที่เดียว อัปเดตทั้งระบบ"
+          eyebrow="ขอบเขตของระบบ"
+          title="เวลาทำงานถึงเงินเดือน ในฐานข้อมูลชุดเดียว"
+          sub="รายการที่มีป้าย ส่งมอบในโครงการ ทีมงานพัฒนาและทดสอบกับข้อมูลของบริษัทคุณก่อนส่งมอบ เราไม่ทำระบบสรรหา ประเมินผล หรืออบรม"
         />
         <div className="stagger-group mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {MODULES.map((m) => {
@@ -536,6 +539,13 @@ const LandingPage = () => {
                 </span>
                 <h3 className="mt-4 text-lg font-semibold text-slate-900">{m.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500">{m.desc}</p>
+                <span
+                  className={`mt-4 inline-block rounded-full px-2.5 py-1 text-[11px] ${
+                    m.status === 'พร้อมใช้' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  {m.status}
+                </span>
               </div>
             );
           })}
@@ -547,8 +557,8 @@ const LandingPage = () => {
         <div className="mx-auto flex h-full max-w-7xl flex-col justify-center px-5">
           <SectionHead
             center={false}
-            eyebrow="ขั้นตอนใช้งานจริง"
-            title="ห้าขั้นตอน จากเวลาเข้างานถึงเงินเข้าบัญชี"
+            eyebrow="ขั้นตอนของโครงการ"
+            title="ห้าขั้นตอน จากตรวจนับกฎถึงใช้งานจริง"
           />
           <div className="flow-track mt-10 flex gap-5 overflow-x-auto pb-4 lg:overflow-visible lg:pb-0">
             {FLOW.map((f, i) => (
@@ -565,41 +575,6 @@ const LandingPage = () => {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ---------------- TOUR ---------------- */}
-      <section id="tour" className="mx-auto max-w-7xl px-5 py-20">
-        <SectionHead
-          eyebrow="ตัวอย่างหน้าจอ"
-          title="หน้าตาระบบที่ HR ใช้ทุกวัน"
-          sub="ออกแบบให้คนที่ไม่ใช่สาย IT ใช้ได้เอง เมนูภาษาไทย ตัวเลขอ่านง่าย และมองเห็นสิ่งที่ต้องทำวันนี้ตั้งแต่หน้าแรก"
-        />
-
-        <div className="reveal mt-10 flex flex-wrap justify-center gap-2">
-          {[
-            { id: 'dashboard', label: 'แดชบอร์ดผู้บริหาร', icon: LineChart },
-            { id: 'attendance', label: 'เวลาเข้า-ออก & OT', icon: Clock },
-            { id: 'payroll', label: 'รอบเงินเดือน', icon: Wallet },
-          ].map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition-all ${
-                tab === t.id
-                  ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                  : 'border-slate-200 bg-white text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              <t.icon className="h-4 w-4" />
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div ref={tourMockRef} className="mx-auto mt-8 max-w-5xl">
-          <ProductMock variant={tab} />
         </div>
       </section>
 
@@ -639,14 +614,14 @@ const LandingPage = () => {
       <section id="pricing" className="mx-auto max-w-7xl px-5 py-20">
         <SectionHead
           eyebrow="ราคาแบบขั้นบันได"
-          title="เริ่มที่ระบบมาตรฐาน แล้วจ่ายเพิ่มเฉพาะกฎที่คุณใช้จริง"
-          sub="ไม่มีแพ็กเกจที่บังคับซื้อของที่ไม่ได้ใช้ ทุกบรรทัดในใบเสนอราคาบอกได้ว่าจ่ายเพื่ออะไร"
+          title="ระบบมาตรฐานเป็นฐาน บวกสิ่งที่บริษัทคุณต้องใช้จริง"
+          sub="ทุกบรรทัดในใบเสนอราคาบอกได้ว่าจ่ายเพื่ออะไร ถ้าคุณต้องการเพียงระบบมาตรฐาน ระบบเช่าใช้รายเดือนคุ้มกว่า"
         />
 
         <div className="mt-12 grid gap-5 lg:grid-cols-5">
           {/* core package */}
           <div className="reveal rounded-2xl border border-emerald-300 bg-gradient-to-b from-emerald-50 to-white p-7 shadow-sm shadow-emerald-200/70 lg:col-span-2">
-            <div className="text-sm text-emerald-700">ระบบมาตรฐาน (ทุกโครงการเริ่มจากตรงนี้)</div>
+            <div className="text-sm text-emerald-700">ระบบมาตรฐาน (ฐานของทุกโครงการ ไม่ขายแยก)</div>
             <div className="mt-3 flex items-end gap-2">
               <span className="text-4xl font-bold text-slate-900">{CORE.price}</span>
               <span className="pb-1.5 text-xs text-slate-400">{CORE.unit}</span>
@@ -665,10 +640,10 @@ const LandingPage = () => {
           {/* rule packs */}
           <div className="reveal rounded-2xl border border-slate-200 bg-white p-7 shadow-sm shadow-slate-200/60 lg:col-span-3">
             <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Plus className="h-4 w-4 text-emerald-600" /> บวกเฉพาะชุดกฎและการเชื่อมต่อที่ต้องใช้
+              <Plus className="h-4 w-4 text-emerald-600" /> บวกการติดตั้ง การเชื่อมต่อ และชุดกฎที่ต้องใช้
             </div>
             <div className="mt-5 space-y-5">
-              {['กฎเวลาและค่าจ้าง', 'การเชื่อมต่อ', 'โครงสร้างองค์กร'].map((group) => (
+              {['ติดตั้งและเชื่อมต่อ', 'กฎเวลาและค่าจ้าง', 'โครงสร้างองค์กร'].map((group) => (
                 <div key={group}>
                   <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">{group}</div>
                   <div className="mt-2 divide-y divide-slate-100">
@@ -728,17 +703,17 @@ const LandingPage = () => {
         <div className="reveal mt-10 flex flex-col items-center gap-4 rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-50 via-white to-teal-50 p-7 text-center sm:flex-row sm:text-left">
           <ShieldQuestion className="h-10 w-10 shrink-0 text-emerald-600" />
           <div className="flex-1">
-            <div className="text-lg font-semibold text-slate-900">พิสูจน์ก่อนจ่าย</div>
+            <div className="text-lg font-semibold text-slate-900">เดินคู่ขนานก่อนใช้จริง</div>
             <p className="mt-1 text-sm leading-relaxed text-slate-500">
-              ส่งไฟล์เวลาเข้า-ออก 1 เดือนและระเบียบการทำงานมาให้เรา ทีมงานจะตั้งกฎของคุณลงระบบและคำนวณเงินเดือนให้ดูของจริงใน 3 วันทำการ
-              ถ้าตัวเลขไม่ตรงกับที่ HR คำนวณเอง เราไม่คิดค่าใช้จ่ายในขั้นนี้
+              ก่อนตัดใช้จริง เราคำนวณคู่กับวิธีเดิมของคุณ 1 งวด แล้วส่งรายงานส่วนต่างรายคนพร้อมสาเหตุและหลักฐานจากเวลาสแกน
+              คุณยืนยันผลก่อน ระบบจึงเริ่มใช้จริง
             </p>
           </div>
           <a
             href="#contact"
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition-transform hover:scale-105"
           >
-            ส่งไฟล์ให้เราคำนวณ <ArrowRight className="h-4 w-4" />
+            นัดคุยกับเรา <ArrowRight className="h-4 w-4" />
           </a>
         </div>
       </section>
@@ -759,11 +734,11 @@ const LandingPage = () => {
           <div className="pointer-events-none absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-teal-200/60 blur-[100px]" />
           <div className="relative">
             <h2 className="text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
-              ให้เราพิสูจน์ด้วยข้อมูลจริงของคุณก่อน
+              เล่าให้เราฟังว่าระบบปัจจุบันติดตรงไหน
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-500">
-              ส่งไฟล์เวลาเข้า-ออก 1 เดือน พร้อมระเบียบการทำงานเรื่องกะ OT และเบี้ยต่าง ๆ มาให้เรา
-              ทีมงานจะตั้งกฎของคุณลงระบบและคำนวณเงินเดือนให้ดูของจริงภายใน 3 วันทำการ ไม่มีค่าใช้จ่ายและไม่ผูกมัด
+              ข้อกำหนดเรื่องที่เก็บข้อมูล ระบบที่ต้องเชื่อม หรือกฎที่ตั้งไม่ได้ บอกเราเป็นข้อ ๆ
+              เราจะตอบตรง ๆ ว่าทำได้หรือไม่ ใช้เวลาเท่าไร และถ้าระบบเช่าใช้เหมาะกับคุณกว่า เราจะบอกแบบนั้น
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
@@ -795,7 +770,7 @@ const LandingPage = () => {
       {/* ---------------- FOOTER ---------------- */}
       <footer className="border-t border-slate-200 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 sm:flex-row">
-          <span className="text-sm text-slate-400">© {new Date().getFullYear()} HRM Suite · ระบบบริหารงานบุคคลสำหรับธุรกิจไทย</span>
+          <span className="text-sm text-slate-400">© {new Date().getFullYear()} HRM Suite · ระบบเวลาทำงานและเงินเดือนที่เป็นของคุณ</span>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
             <a href="tel:+66866083298" className="flex items-center gap-1.5 hover:text-emerald-700">
               <Phone className="h-3.5 w-3.5" /> 086-608-3298

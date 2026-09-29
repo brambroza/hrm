@@ -156,7 +156,7 @@ const AttendancePolicyPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('attendancePolicy.title')} - HRM System</title>
+        <title>{t('attendancePolicy.title')} - GoAlong HR</title>
         <meta name="description" content="Attendance policy configuration" />
       </Helmet>
       <div className="space-y-6">

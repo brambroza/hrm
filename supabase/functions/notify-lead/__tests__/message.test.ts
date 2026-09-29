@@ -74,7 +74,7 @@ describe('buildEmail', () => {
   const email = buildEmail(lead);
 
   it('puts the organization and headcount in the subject', () => {
-    expect(email.subject).toBe('[HRM Suite] ลงทะเบียนใหม่: บริษัท ตัวอย่าง จำกัด (1250 คน)');
+    expect(email.subject).toBe('[GoAlong HR] ลงทะเบียนใหม่: บริษัท ตัวอย่าง จำกัด (1250 คน)');
   });
 
   it('carries every field in the text', () => {

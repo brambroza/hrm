@@ -87,11 +87,11 @@ const BackupRecoveryPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('settings.backupRecovery')} - HRM System</title>
+        <title>{t('settings.backupRecovery')} - GoAlong HR</title>
       </Helmet>
       
       <div className="space-y-6 max-w-5xl mx-auto">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('settings.backupRecovery')}</h1>
             <p className="text-slate-500 dark:text-slate-400">Secure your data with backups</p>

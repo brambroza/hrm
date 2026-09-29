@@ -246,7 +246,7 @@ const DashboardPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('common.dashboard')} - HRM System</title>
+        <title>{t('common.dashboard')} - GoAlong HR</title>
       </Helmet>
 
       <div className="space-y-6">

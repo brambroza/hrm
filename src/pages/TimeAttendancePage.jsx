@@ -23,11 +23,11 @@ const TimeAttendancePage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('common.attendance')} - HRM System</title>
+        <title>{t('common.attendance')} - GoAlong HR</title>
         <meta name="description" content="Time and Attendance Management" />
       </Helmet>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('common.attendance')}</h1>
             <p className="text-slate-500 dark:text-slate-400">Manage shifts, attendance logs, and assignments</p>

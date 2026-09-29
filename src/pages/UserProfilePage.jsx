@@ -49,7 +49,7 @@ const UserProfilePage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('userProfile.profile')} - HRM System</title>
+        <title>{t('userProfile.profile')} - GoAlong HR</title>
       </Helmet>
       
       <div className="space-y-6 max-w-4xl mx-auto">

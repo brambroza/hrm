@@ -13,6 +13,7 @@ import { IMAGES, LEGAL_NOTE } from './posts.mjs';
 import {
   COMPANY, CONTACT, CONTACT_CHANNELS, LOGIN_PATH, NAV_LINKS, REGISTER_PATH, SITE_NAME, SITE_TAGLINE,
 } from '../../src/components/landing/site.js';
+import { LOGO_WORDS, logoMarkSvg } from '../../src/components/landing/brand.js';
 
 export { SITE_NAME, SITE_TAGLINE };
 export const BLOG_TITLE = 'บทความ: เวลาทำงาน กะ OT และเงินเดือน';
@@ -215,7 +216,8 @@ a{color:var(--link)}a:hover{color:#1e3a8a}
 .site-nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);border-bottom:1px solid rgba(15,23,42,.07);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .site-nav nav{max-width:1280px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:#0f172a;font-size:18px;font-weight:600;line-height:1}
-.logo .mark{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#34d399,#5eead4);color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center}
+.logo svg{flex:none}
+.logo .word{white-space:nowrap;letter-spacing:-.01em}
 .logo .dot{color:#059669}
 .logo .names{display:flex;flex-direction:column;gap:3px}
 .logo .by{font-size:11px;font-weight:400;color:#64748b}
@@ -348,7 +350,7 @@ ${structured.map((data) => `<script type="application/ld+json">${jsonLd(data)}</
 <body>
 <header class="site-nav">
 <nav aria-label="เมนูหลัก">
-<a class="logo" href="/"><span class="mark" aria-hidden="true">H</span><span class="names"><span>HRM<span class="dot">.</span>Suite</span><span class="by">${escapeHtml(COMPANY.byline)}</span></span></a>
+<a class="logo" href="/" aria-label="${SITE_NAME}">${logoMarkSvg(36, 'logo-nav')}<span class="names"><span class="word">${LOGO_WORDS.first} <span class="dot">${LOGO_WORDS.second}</span></span><span class="by">${escapeHtml(COMPANY.byline)}</span></span></a>
 <div class="nav-links">
 ${NAV_LINKS.map((link) => `<a href="${escapeHtml(navHref(link.href))}"${link.href === '/blog/' && path.startsWith('/blog/') ? ' aria-current="page"' : ''}>${escapeHtml(link.label)}</a>`).join('\n')}
 </div>
@@ -374,7 +376,7 @@ ${body}
 <footer class="site">
 <div class="inner">
 <div>
-<a class="logo" href="/"><span class="mark" aria-hidden="true">H</span><span>HRM<span class="dot">.</span>Suite</span></a>
+<a class="logo" href="/" aria-label="${SITE_NAME}">${logoMarkSvg(36, 'logo-footer')}<span class="word">${LOGO_WORDS.first} <span class="dot">${LOGO_WORDS.second}</span></span></a>
 <p class="byline">${escapeHtml(COMPANY.byline)}</p>
 <p>${escapeHtml(SITE_TAGLINE)}</p>
 </div>

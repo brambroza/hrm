@@ -6,7 +6,7 @@
  * the site come from one place. Plain data only: the generator runs in Node.
  */
 
-export const SITE_NAME = 'HRM Suite';
+export const SITE_NAME = 'GoAlong HR';
 export const SITE_TAGLINE = 'ระบบเวลาทำงานและเงินเดือนที่เป็นของคุณ';
 
 /** The company behind the product. */

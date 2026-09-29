@@ -1,3 +1,4 @@
+import { BrandMark } from '@/components/BrandLogo';
 import React, { useMemo, useState } from 'react';
 import { Check, FileUp, Lock } from 'lucide-react';
 import {
@@ -384,8 +385,8 @@ const ProductMock = ({ variant = 'inbox' }) => {
       <div className="flex">
         <div className="hidden w-32 shrink-0 border-r border-slate-200 bg-white p-2 sm:block">
           <div className="mb-2 flex items-center gap-1.5 px-1.5 py-1">
-            <span className="h-4 w-4 rounded bg-emerald-700" />
-            <span className="text-[11px] font-semibold text-slate-900">HRM Suite</span>
+            <BrandMark size={16} />
+            <span className="text-[11px] font-semibold text-slate-900">GoAlong HR</span>
           </div>
           {MENU.map((item) => (
             <div

@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Helmet } from 'react-helmet';
+import { BrandMark } from '@/components/BrandLogo';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { describeAuthError } from '@/utils/authErrors';
@@ -74,7 +75,7 @@ const LoginPage = () => {
     <>
       <Helmet>
         <title>{t('auth.loginTitle')}</title>
-        <meta name="description" content="Login to HRM System" />
+        <meta name="description" content="เข้าสู่ระบบ GoAlong HR" />
       </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-slate-50 to-teal-50 flex items-center justify-center p-4">
         <motion.div
@@ -96,9 +97,9 @@ const LoginPage = () => {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: 'spring' }}
-                className="inline-flex items-center justify-center w-16 h-16 bg-emerald-600 rounded-full mb-4"
+                className="inline-flex items-center justify-center mb-4"
               >
-                <LogIn className="w-8 h-8 text-white" />
+                <BrandMark size={64} />
               </motion.div>
               <h1 className="text-3xl font-bold text-slate-900 mb-2">{t('auth.loginTitle')}</h1>
               <p className="text-slate-600">{t('auth.signInSubtitle')}</p>

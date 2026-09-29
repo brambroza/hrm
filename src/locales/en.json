@@ -175,7 +175,7 @@
     "allActions": "All Actions"
   },
   "auth": {
-    "loginTitle": "HRM System",
+    "loginTitle": "GoAlong HR",
     "signInSubtitle": "Sign in to your account",
     "emailLabel": "Email Address",
     "passwordLabel": "Password",
@@ -686,5 +686,46 @@
       "payDay": "Enter a day from 1 to 31"
     },
     "hint": "Changes here update this setting only. To have the default shift and weekly days off follow, use"
+  },
+  "documents": {
+    "title": "Labour law documents",
+    "subtitle": "Produce documents from stored data and see what the law requires of an employer",
+    "issue": "Produce a document",
+    "list": "Documents required by law",
+    "download": "Download PDF",
+    "downloaded": "Document downloaded",
+    "loadError": "Could not load data",
+    "retry": "Try again",
+    "basis": "Law",
+    "audience": "For",
+    "timing": "Timing",
+    "register": {
+      "title": "Employee register",
+      "description": "Everyone employed, including those who left, with the items listed in section 113",
+      "count": "{{count}} employees in the register",
+      "missing": "Required data is incomplete; these fields are left blank",
+      "missingItem": "{{label}} missing for {{count}}",
+      "fix": "Edit employee data"
+    },
+    "wage": {
+      "title": "Wage payment record",
+      "description": "Payments of the period with a column for the employee's signature, under section 114",
+      "period": "Pay period",
+      "noPeriod": "No pay period yet",
+      "summary": "{{count}} employees, net total {{net}} baht",
+      "caution": "Before you use this",
+      "blank": "{{columns}} are left blank because the system does not calculate them yet; fill them in if paid",
+      "inconsistent": "{{count}} lines where income less deductions differs from net pay; recalculate payroll",
+      "noPermission": "Payroll view permission is needed to produce this document"
+    },
+    "certificate": {
+      "title": "Certificate of employment",
+      "description": "States the period and the work done; pay and reason for leaving are not stated",
+      "employee": "Employee",
+      "choose": "Choose an employee",
+      "signatory": "Signatory name",
+      "signatoryTitle": "Signatory title",
+      "problems": "Cannot be issued yet"
+    }
   }
 }

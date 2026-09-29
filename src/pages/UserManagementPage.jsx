@@ -94,7 +94,7 @@ const UserManagementPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('userManagement.title')} - HRM System</title>
+        <title>{t('userManagement.title')} - GoAlong HR</title>
       </Helmet>
 
       <div className="space-y-6">
@@ -112,7 +112,7 @@ const UserManagementPage = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-4">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg text-blue-600">
               <User className="w-6 h-6" />

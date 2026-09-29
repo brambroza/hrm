@@ -63,3 +63,69 @@
 *, *::before, *::after {
   @apply transition-colors duration-300;
 }
+
+/*
+ * Tables on phones and tablets. A table squeezed into a narrow screen broke
+ * names and codes across three or four lines. Below the desktop breakpoint
+ * cells stay on one line and the table scrolls sideways inside its card; long
+ * free text is cut with an ellipsis so one cell cannot take the whole screen.
+ */
+@media (max-width: 1023px) {
+  main table th,
+  main table td {
+    white-space: nowrap;
+  }
+  main table td {
+    max-width: 18rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  main table th:first-child,
+  main table td:first-child {
+    padding-left: 1rem;
+  }
+}
+
+/*
+ * A soft shadow at the edge of a table that has more to the side, so it is
+ * clear the table scrolls. The white covers move with the content and hide
+ * the shadow once that edge is reached.
+ */
+@media (max-width: 1023px) {
+  main .overflow-x-auto:has(> table) {
+    background:
+      linear-gradient(to right, #fff 30%, rgba(255, 255, 255, 0)) left center / 32px 100% no-repeat local,
+      linear-gradient(to left, #fff 30%, rgba(255, 255, 255, 0)) right center / 32px 100% no-repeat local,
+      radial-gradient(farthest-side at 0 50%, rgba(15, 23, 42, 0.16), rgba(15, 23, 42, 0)) left center / 12px 100% no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, rgba(15, 23, 42, 0.16), rgba(15, 23, 42, 0)) right center / 12px 100% no-repeat scroll,
+      #fff;
+  }
+  main .overflow-x-auto:has(> table) thead,
+  main .overflow-x-auto:has(> table) thead tr,
+  main .overflow-x-auto:has(> table) th {
+    background-color: rgba(248, 250, 252, 0.6);
+  }
+}
+
+/* Sideways scrolling that feels native on touch screens and shows a slim bar. */
+main .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+/* iOS zooms the page when a focused field has text smaller than 16px. */
+@media (max-width: 767px) {
+  main input:not([type='checkbox']):not([type='radio']),
+  main select,
+  main textarea {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -117,10 +117,10 @@ export const buildEmail = (lead: Lead): Email => {
     ['รหัสอ้างอิง', lead.id],
   ];
 
-  const subject = singleLine(`[HRM Suite] ลงทะเบียนใหม่: ${lead.organization_name} (${lead.employee_count} คน)`).slice(0, 200);
+  const subject = singleLine(`[GoAlong HR] ลงทะเบียนใหม่: ${lead.organization_name} (${lead.employee_count} คน)`).slice(0, 200);
 
   const text = [
-    'มีผู้ลงทะเบียนรับการติดต่อกลับจากหน้าเว็บ HRM Suite',
+    'มีผู้ลงทะเบียนรับการติดต่อกลับจากหน้าเว็บ GoAlong HR',
     '',
     ...rows.map(([label, value]) => `${label}: ${value}`),
     '',
@@ -132,7 +132,7 @@ export const buildEmail = (lead: Lead): Email => {
 <body style="margin:0;padding:24px;background:#f8fafc;font-family:Tahoma,'Segoe UI',sans-serif;color:#0f172a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px">
 <tr><td style="padding:24px 24px 8px">
-<p style="margin:0;font-size:13px;color:#047857;font-weight:bold">HRM Suite</p>
+<p style="margin:0;font-size:13px;color:#047857;font-weight:bold">GoAlong HR</p>
 <h1 style="margin:4px 0 0;font-size:20px;line-height:1.4">มีผู้ลงทะเบียนรับการติดต่อกลับ</h1>
 </td></tr>
 <tr><td style="padding:8px 24px 16px">

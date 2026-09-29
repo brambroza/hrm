@@ -179,7 +179,7 @@ Mail is sent through [Resend](https://resend.com). Before deploying:
 
 ```bash
 supabase secrets set RESEND_API_KEY=... \
-  LEAD_NOTIFY_FROM="HRM Suite <noreply@goalong.co.th>" \
+  LEAD_NOTIFY_FROM="GoAlong HR <noreply@goalong.co.th>" \
   LEAD_NOTIFY_TO=amnart.gl@gmail.com \
   ALLOWED_ORIGIN=https://your-app-domain
 supabase functions deploy notify-lead --no-verify-jwt

@@ -105,7 +105,7 @@ const IntegrationsPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('settings.integrations')} - HRM System</title>
+        <title>{t('settings.integrations')} - GoAlong HR</title>
       </Helmet>
       
       <div className="space-y-6 max-w-5xl mx-auto">

@@ -207,11 +207,11 @@ const EmployeeListPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('common.employees')} - HRM System</title>
+        <title>{t('common.employees')} - GoAlong HR</title>
         <meta name="description" content="Employee Management" />
       </Helmet>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('common.employees')}</h1>
             <p className="text-slate-500 dark:text-slate-400">{filteredEmployees.length} employees found</p>

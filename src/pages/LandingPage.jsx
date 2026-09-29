@@ -12,6 +12,7 @@ import ProductMock from '@/components/landing/ProductMock';
 import {
   STATS, WEDGES, PAINS, MODULES, FLOW, CORE, RULE_PACKS, EXAMPLE_BUILDS, FAQS, DAILY_STEPS, TOUR, COMPARE,
 } from '@/components/landing/data';
+import BrandLogo from '@/components/BrandLogo';
 import { COMPANY, CONTACT, CONTACT_CHANNELS, NAV_LINKS, SITE_NAME, SITE_TAGLINE } from '@/components/landing/site';
 
 /** Icon lookup so module data can stay serialisable. */
@@ -171,14 +172,8 @@ const LandingPage = () => {
       {/* ---------------- NAV ---------------- */}
       <header className="site-nav fixed inset-x-0 top-0 z-50 border-b border-transparent">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <a href="#top" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-300 font-bold text-white">
-              H
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-lg font-semibold text-slate-900">HRM<span className="text-emerald-600">.</span>Suite</span>
-              <span className="text-[11px] text-slate-500">{COMPANY.byline}</span>
-            </span>
+          <a href="#top" className="flex items-center">
+            <BrandLogo byline={COMPANY.byline} />
           </a>
 
           <div className="hidden items-center gap-5 lg:flex xl:gap-7">
@@ -458,7 +453,7 @@ const LandingPage = () => {
           <div className="hidden grid-cols-3 gap-4 border-b border-slate-200 bg-slate-50 px-6 py-3 text-sm font-semibold text-slate-700 md:grid">
             <span>เรื่อง</span>
             <span>ระบบเช่าใช้รายเดือน</span>
-            <span className="text-emerald-800">HRM Suite</span>
+            <span className="text-emerald-800">GoAlong HR</span>
           </div>
           {COMPARE.map((row) => (
             <div key={row.topic} className="grid gap-x-4 gap-y-1 border-b border-slate-100 px-6 py-4 last:border-b-0 md:grid-cols-3">
@@ -473,7 +468,7 @@ const LandingPage = () => {
                 {row.better === 'ours'
                   ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" aria-label="ข้อได้เปรียบ" />
                   : <Minus className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />}
-                <span><span className="md:hidden">HRM Suite: </span>{row.ours}</span>
+                <span><span className="md:hidden">GoAlong HR: </span>{row.ours}</span>
               </span>
             </div>
           ))}
@@ -752,10 +747,7 @@ const LandingPage = () => {
       <footer className="border-t border-slate-200 bg-white py-12">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-300 font-bold text-white" aria-hidden="true">H</span>
-              <span className="text-lg font-semibold text-slate-900">HRM<span className="text-emerald-600">.</span>Suite</span>
-            </div>
+            <BrandLogo />
             <p className="mt-2 text-sm font-medium text-slate-700">{COMPANY.byline}</p>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">{SITE_TAGLINE}</p>
           </div>

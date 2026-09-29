@@ -466,10 +466,10 @@ const ReportsPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('reports.title')} - HRM System</title>
+        <title>{t('reports.title')} - GoAlong HR</title>
       </Helmet>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('reports.title')}</h1>
             <p className="text-slate-500 dark:text-slate-400">{t('reports.subtitle')}</p>
@@ -491,7 +491,7 @@ const ReportsPage = () => {
         )}
 
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-6">
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">{t('common.from')}</label>
               <input

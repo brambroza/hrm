@@ -119,10 +119,10 @@ const DepartmentManagementPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('department.title')} - HRM System</title>
+        <title>{t('department.title')} - GoAlong HR</title>
       </Helmet>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('department.title')}</h1>
             <p className="text-slate-500 dark:text-slate-400">{departments.length} {t('department.count')}</p>

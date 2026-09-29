@@ -245,7 +245,7 @@ const TranslatePage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('translate.title')} - HRM System</title>
+        <title>{t('translate.title')} - GoAlong HR</title>
       </Helmet>
 
       <div className="space-y-6">

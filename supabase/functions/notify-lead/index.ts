@@ -12,7 +12,7 @@
  * Deploy:   supabase functions deploy notify-lead --no-verify-jwt
  * Secrets:  RESEND_API_KEY      API key of the Resend account
  *           LEAD_NOTIFY_FROM    sender, on a domain verified in Resend,
- *                               e.g. "HRM Suite <noreply@goalong.co.th>"
+ *                               e.g. "GoAlong HR <noreply@goalong.co.th>"
  *           LEAD_NOTIFY_TO      recipient; defaults to amnart.gl@gmail.com
  *           ALLOWED_ORIGIN      the site address, for CORS
  *

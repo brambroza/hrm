@@ -94,7 +94,7 @@ const AuditLogPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('audit.title')} - HRM System</title>
+        <title>{t('audit.title')} - GoAlong HR</title>
       </Helmet>
       
       <div className="space-y-6 max-w-6xl mx-auto">

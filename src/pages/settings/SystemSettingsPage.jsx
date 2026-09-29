@@ -101,12 +101,12 @@ const SystemSettingsPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('settings.systemConfig')} - HRM System</title>
+        <title>{t('settings.systemConfig')} - GoAlong HR</title>
       </Helmet>
       
       <div className="space-y-6 max-w-4xl mx-auto">
         <SetupHint />
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('settings.systemConfig')}</h1>
             <p className="text-slate-500 dark:text-slate-400">Configure global system preferences</p>

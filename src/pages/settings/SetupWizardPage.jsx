@@ -179,7 +179,7 @@ const SetupWizardPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('setup.title')} - HRM System</title>
+        <title>{t('setup.title')} - GoAlong HR</title>
       </Helmet>
       <SetupWizardView
         form={form}

@@ -87,7 +87,7 @@ const SettingsPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('common.settings')} - HRM System</title>
+        <title>{t('common.settings')} - GoAlong HR</title>
       </Helmet>
       <div className="space-y-6">
         <div>

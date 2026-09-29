@@ -10,6 +10,7 @@ import {
 } from '../render.mjs';
 import { build, resolveOrigin } from '../../build-blog.mjs';
 import { COMPANY, CONTACT, CONTACT_CHANNELS, NAV_LINKS } from '../../../src/components/landing/site.js';
+import { LOGO_G_PATH } from '../../../src/components/landing/brand.js';
 
 const ORIGIN = 'https://hrm.example.co.th';
 
@@ -256,7 +257,8 @@ describe('top menu and footer match the landing page', () => {
     expect(header).toContain(CONTACT.phoneLabel);
     expect(header).toContain('href="/login"');
     expect(header).toContain('href="/register"');
-    expect(header).toContain('HRM<span class="dot">.</span>Suite');
+    expect(header).toContain('GoAlong <span class="dot">HR</span>');
+    expect(header).toContain(LOGO_G_PATH);
   });
 
   it('offers the same links on a narrow screen, without needing a script', () => {
@@ -276,7 +278,7 @@ describe('top menu and footer match the landing page', () => {
     expect(header).toContain(COMPANY.byline);
     expect(footer).toContain(COMPANY.byline);
     expect(footer).toContain(COMPANY.name);
-    expect(renderIndex(POSTS, ORIGIN)).toContain(`© ${new Date().getFullYear()} HRM Suite ${COMPANY.byline}`);
+    expect(renderIndex(POSTS, ORIGIN)).toContain(`© ${new Date().getFullYear()} GoAlong HR ${COMPANY.byline}`);
   });
 
   it('footer lists every contact channel', () => {
@@ -364,7 +366,7 @@ describe('contact details', () => {
       name: COMPANY.name,
       telephone: CONTACT.phoneE164,
       email: CONTACT.email,
-      brand: { name: 'HRM Suite' },
+      brand: { name: 'GoAlong HR' },
     });
     expect(article.publisher.address).toMatchObject({ '@type': 'PostalAddress', postalCode: '10290', addressCountry: 'TH' });
   });
@@ -404,7 +406,7 @@ describe('sitemap, robots, feed and llms.txt', () => {
 
   it('llms.txt says what the product is and is not, and links the Markdown of every post', () => {
     const txt = renderLlmsTxt(POSTS, ORIGIN);
-    expect(txt.startsWith('# HRM Suite\n')).toBe(true);
+    expect(txt.startsWith('# GoAlong HR\n')).toBe(true);
     POSTS.forEach((post) => expect(txt).toContain(`(${ORIGIN}/blog/${post.slug}.md)`));
     expect(txt).toContain('ไม่มีโมดูลสรรหา');
     expect(txt).toContain('ข้อมูลตัวอย่าง');

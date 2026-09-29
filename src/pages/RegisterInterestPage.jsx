@@ -69,8 +69,8 @@ const RegisterInterestPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-5 py-10">
       <Helmet>
-        <title>ลงทะเบียนรับการติดต่อกลับ | HRM</title>
-        <meta name="description" content="ลงทะเบียนความสนใจ ให้ทีมงานติดต่อกลับเพื่อสาธิตระบบ HRM ด้วยข้อมูลจริงขององค์กรคุณ" />
+        <title>ลงทะเบียนรับการติดต่อกลับ | GoAlong HR</title>
+        <meta name="description" content="ลงทะเบียนความสนใจ ให้ทีมงานติดต่อกลับเพื่อสาธิตระบบ GoAlong HR ด้วยข้อมูลจริงขององค์กรคุณ" />
       </Helmet>
 
       <div className="mx-auto max-w-xl">

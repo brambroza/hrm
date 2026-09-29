@@ -52,9 +52,9 @@ export const validateLead = (form) => {
  */
 export const leadMailto = (form, to) => {
   const line = (value) => String(value ?? '').replace(/[\r\n]+/g, ' ').trim() || '-';
-  const subject = `[HRM Suite] ลงทะเบียน: ${line(form.organization_name)}`.slice(0, 150);
+  const subject = `[GoAlong HR] ลงทะเบียน: ${line(form.organization_name)}`.slice(0, 150);
   const body = [
-    'ขอรับการติดต่อกลับเรื่อง HRM Suite',
+    'ขอรับการติดต่อกลับเรื่อง GoAlong HR',
     '',
     `องค์กร: ${line(form.organization_name)}`,
     `จำนวนพนักงาน: ${line(form.employee_count)}`,

@@ -353,7 +353,7 @@ const PayrollPeriodsPage = () => {
                       >
                           <ChevronLeft className="w-4 h-4" />
                       </Button>
-                      <span className="text-sm font-medium px-2">หน้า {currentPage} จาก {totalPages}</span>
+                      <span className="whitespace-nowrap text-sm font-medium px-2">หน้า {currentPage} จาก {totalPages}</span>
                       <Button 
                         variant="outline" 
                         size="sm" 

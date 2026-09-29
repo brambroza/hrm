@@ -33,6 +33,7 @@ import ReportsPage from '@/pages/ReportsPage';
 import AttendanceCalculationPage from '@/pages/AttendanceCalculationPage';
 import DepartmentManagementPage from '@/pages/settings/DepartmentManagementPage';
 import OtRequestPage from '@/pages/OtRequestPage';
+import LegalDocumentsPage from '@/pages/LegalDocumentsPage';
 import './i18n/config';
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
               <Route path="ot-requests" element={<OtRequestPage />} />
               <Route path="leave" element={<LeaveManagementPage />} />
               <Route path="reports" element={<ReportsPage />} />
+              <Route path="documents" element={<LegalDocumentsPage />} />
               
               {/* Payroll Routes */}
               <Route path="payroll/setup" element={<AllowancesDeductionsPage />} />

@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import BrandLogo from '@/components/BrandLogo';
 import UserProfileModal from '@/components/UserProfileModal';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 import { 
@@ -146,6 +147,12 @@ const MainLayout = () => {
       path: '/reports', 
       permission: 'reports' 
     },
+    {
+      icon: FileText,
+      label: t('documents.title'),
+      path: '/documents',
+      permission: 'employee'
+    },
         { 
           icon: Settings, 
           label: t('common.settings'), 
@@ -186,14 +193,11 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row transition-colors duration-300 font-sans text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col lg:flex-row transition-colors duration-300 font-sans text-slate-900 dark:text-slate-100">
       {/* Mobile Sidebar Toggle */}
       <div className="lg:hidden p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2 font-bold text-xl text-slate-900 dark:text-white">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <Users className="w-5 h-5 text-white" />
-          </div>
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-emerald-400">HRM</span>
+          <BrandLogo size={32} textClassName="text-xl" />
         </div>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
           {sidebarOpen ? <X /> : <Menu />}
@@ -214,16 +218,11 @@ const MainLayout = () => {
             <div className={`p-6 hidden lg:flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
               {!collapsed && (
                 <div className="flex items-center gap-2 font-bold text-2xl text-slate-900 dark:text-white">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-emerald-400">HRM</span>
+                  <BrandLogo size={32} textClassName="text-xl" />
                 </div>
               )}
               {collapsed && (
-                 <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
+                 <BrandLogo size={32} markOnly />
               )}
               
               <button 

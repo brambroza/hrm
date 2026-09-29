@@ -227,10 +227,10 @@ const OtRequestPage = () => {
   return (
     <>
       <Helmet>
-        <title>{t('ot.title')} - HRM System</title>
+        <title>{t('ot.title')} - GoAlong HR</title>
       </Helmet>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('ot.title')}</h1>
             <p className="text-slate-500 dark:text-slate-400">{requests.length} requests</p>

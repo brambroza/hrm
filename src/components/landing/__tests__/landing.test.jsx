@@ -11,7 +11,7 @@ const amount = (text) => Number(text.replace(/,/g, '').replace('−', '-'));
 describe('ProductMock', () => {
   it.each(TOUR.map((item) => item.id))('renders the %s screen', (variant) => {
     const html = renderToStaticMarkup(<ProductMock variant={variant} />);
-    expect(html).toContain('HRM Suite');
+    expect(html).toContain('GoAlong HR');
     // Every screen says its figures are sample data.
     expect(html).toContain('ข้อมูลตัวอย่าง');
   });

@@ -25,7 +25,7 @@ describe('leadMailto', () => {
   });
 
   it('carries everything the visitor typed', () => {
-    expect(query.get('subject')).toBe('[HRM Suite] ลงทะเบียน: บริษัท ตัวอย่าง จำกัด');
+    expect(query.get('subject')).toBe('[GoAlong HR] ลงทะเบียน: บริษัท ตัวอย่าง จำกัด');
     Object.values(form).forEach((value) => expect(query.get('body')).toContain(value));
   });
 

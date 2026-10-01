@@ -34,6 +34,8 @@ import AttendanceCalculationPage from '@/pages/AttendanceCalculationPage';
 import DepartmentManagementPage from '@/pages/settings/DepartmentManagementPage';
 import OtRequestPage from '@/pages/OtRequestPage';
 import LegalDocumentsPage from '@/pages/LegalDocumentsPage';
+import ClockPage from '@/pages/ClockPage';
+import WorkSitesPage from '@/pages/settings/WorkSitesPage';
 import './i18n/config';
 
 function App() {
@@ -45,6 +47,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<LandingPage />} />
             <Route path="/register" element={<RegisterInterestPage />} />
+            {/* Opened from LINE or a phone; it checks who is there itself, so it sits outside ProtectedRoute. */}
+            <Route path="/clock" element={<ClockPage />} />
             
             <Route
               path="/*"
@@ -76,6 +80,7 @@ function App() {
               <Route path="settings/company" element={<CompanySettingsPage />} />
               <Route path="settings/departments" element={<DepartmentManagementPage />} />
               <Route path="settings/attendance-policy" element={<AttendancePolicyPage />} />
+              <Route path="settings/work-sites" element={<WorkSitesPage />} />
               <Route path="settings/system" element={<SystemSettingsPage />} />
               <Route path="settings/setup" element={<SetupWizardPage />} />
               {/* IntegrationsPage and BackupRecoveryPage simulated success without doing

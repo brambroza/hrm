@@ -75,7 +75,8 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "mainMenu": "Main menu",
-    "warning": "Warning"
+    "warning": "Warning",
+    "clock": "Mobile clock-in"
   },
   "language": {
     "change": "Change Language",
@@ -727,5 +728,30 @@
       "signatoryTitle": "Signatory title",
       "problems": "Cannot be issued yet"
     }
+  },
+  "workSites": {
+    "title": "Mobile clock-in sites",
+    "subtitle": "Where employees may clock in from a phone or LINE, and how far from each place",
+    "add": "Add site",
+    "edit": "Edit site",
+    "name": "Site name, e.g. Rayong plant",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "radius": "Allowed radius (metres)",
+    "radiusHint": "GPS in a city is off by 20–50 m; 100 m or more is advised",
+    "useHere": "Use current position",
+    "locating": "Locating",
+    "active": "Active",
+    "inactive": "Inactive",
+    "mapHint": "Find coordinates in Google Maps: press and hold a spot, then copy the two numbers",
+    "saved": "Site saved",
+    "confirmDelete": "Delete {{name}}? Employees will no longer be able to clock in there.",
+    "empty": "No sites yet. Employees cannot clock in from a phone until one is added.",
+    "radiusValue": "radius {{metres}} m",
+    "viewMap": "View map",
+    "howTitle": "How employees clock in",
+    "how1": "Open hr.goalong.co.th/clock on the phone, or the clock-in menu in the company LINE",
+    "how2": "The first time in LINE, enter the employee code and national ID to link the account",
+    "how3": "Tap clock in/out; the position and distance to the nearest site are recorded as evidence"
   }
 }

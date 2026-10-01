@@ -126,15 +126,16 @@ export const hoursBetween = (start?: string | null, end?: string | null): number
 /**
  * Clock time of a timestamp as read on a wall clock in Thailand.
  * @param value - Timestamp to format.
- * @returns `HH:mm:ss`, or an empty string when the value is missing.
+ * @param options - Parts to show; by default hours, minutes and seconds.
+ * @returns `HH:mm:ss` (or the parts asked for), or an empty string when the value is missing or invalid.
  */
-export const formatBangkokTime = (value?: string | null): string => {
+export const formatBangkokTime = (value?: string | null, options?: Intl.DateTimeFormatOptions): string => {
   if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
   return new Intl.DateTimeFormat('th-TH', {
     timeZone: 'Asia/Bangkok',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
     hour12: false,
-  }).format(new Date(value));
+    ...(options || { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+  }).format(date);
 };

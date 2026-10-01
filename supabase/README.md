@@ -13,6 +13,8 @@
 | `migrations/0004_employee_photo_storage.sql` | Storage bucket and policies for employee photos. |
 | `migrations/0005_leads.sql` | `leads` table for the call-back form. |
 | `migrations/0006_phase0_integrity.sql` | Locks closed payroll periods, one calculation per employee per period, leave/OT decision rules, audit triggers, role check. **Run `tests/phase0_preflight.sql` first.** |
+| `migrations/0007_lead_notifications.sql` | Lets `notify-lead` record that a registration was emailed. |
+| `migrations/0008_mobile_clock.sql` | Clocking in from a phone or LINE: `work_sites` with a radius, `clock_punches` as evidence, `employees.line_user_id`. Check with `tests/mobile_clock.sql`. |
 
 Migrations run in numeric order and each is idempotent, so re-running one is safe.
 
@@ -188,5 +190,47 @@ supabase functions deploy notify-lead --no-verify-jwt
 `--no-verify-jwt` is required: visitors are not signed in. If the function is
 not deployed or the email fails, the registration is still saved in `leads`
 and the visitor still sees the confirmation.
+
+It has not been deployed or run against a Supabase project yet.
+
+### clock-punch
+
+Records a clock-in or clock-out from a phone. The screen at `/clock` works in
+a browser with an app login and inside LINE (LIFF). The function verifies who
+is punching (Supabase access token, or a LINE ID token checked with LINE),
+finds the nearest active work site, refuses a punch outside its radius, and
+writes the punch with the service role. Employees cannot write punches
+themselves, so every punch carries a verified position. Needs
+`migrations/0008_mobile_clock.sql`.
+
+Setting up LINE (once per company, done by the person who owns the company's
+LINE account):
+
+1. In the [LINE Developers console](https://developers.line.biz/) create a
+   provider and a **LINE Login** channel.
+2. Under that channel add a **LIFF** app: size Full, endpoint URL
+   `https://hr.goalong.co.th/clock` (or the company's own address), scopes
+   `profile` and `openid`.
+3. Copy the channel id and the LIFF id.
+4. In the company's LINE Official Account, add a rich menu button that opens
+   `https://liff.line.me/<LIFF id>`.
+
+```bash
+supabase secrets set LINE_CHANNEL_ID=<channel id> ALLOWED_ORIGIN=https://hr.goalong.co.th
+supabase functions deploy clock-punch --no-verify-jwt
+```
+
+In Vercel set `VITE_LIFF_ID=<LIFF id>`. Without it the clock screen still
+works in a browser for employees with an app login; the LINE path is simply
+off.
+
+`--no-verify-jwt` is required: LINE users carry no Supabase JWT. The function
+verifies identity itself for both kinds of caller, and the channel id is the
+only secret-like value it needs (it is a public identifier, not the channel
+secret).
+
+Employees link their LINE account once, from the clock screen, with their
+employee code and 13-digit national ID. HR can unlink by clearing
+`employees.line_user_id`.
 
 It has not been deployed or run against a Supabase project yet.

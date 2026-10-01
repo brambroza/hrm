@@ -5,6 +5,9 @@ import {
   MOCK_EXCEPTIONS, MOCK_EXCEPTION_FILTERS, MOCK_IMPORT_ISSUES, MOCK_SHIFT_KINDS, MOCK_SHIFT_STAFF,
   MOCK_SHIFT_DAYS, MOCK_PAYROLL_PEOPLE, MOCK_PAYROLL_LINES, MOCK_PROOF_ROWS,
 } from '@/components/landing/mockData';
+import ClockView from '@/components/clock/ClockView';
+import { evaluatePosition } from '@/lib/clock/geofence';
+import { planPunch } from '@/lib/clock/punch';
 
 /** Sidebar entries, in the order of the designed application. */
 const MENU = [
@@ -355,7 +358,53 @@ const ProofScreen = () => (
   </>
 );
 
-const SCREENS = { inbox: InboxScreen, import: ImportScreen, shift: ShiftScreen, payroll: PayrollScreen, proof: ProofScreen };
+/** The clock-in screen as the employee sees it in LINE, with sample figures. */
+const CLOCK_SITE = { id: 'site', name: 'โรงงานระยอง', latitude: 12.6814, longitude: 101.2816, radius_m: 150 };
+const CLOCK_POSITION = { latitude: 12.6818, longitude: 101.2816, accuracy: 12 };
+const CLOCK_NOW = '2026-10-01T07:58:00+07:00';
+const CLOCK_DAYS = [
+  { id: 'd1', log_date: '2026-09-30', check_in: '2026-09-30T07:52:00+07:00', check_out: '2026-09-30T17:06:00+07:00' },
+  { id: 'd2', log_date: '2026-09-29', check_in: '2026-09-29T07:55:00+07:00', check_out: '2026-09-29T19:32:00+07:00' },
+];
+
+/**
+ * A phone showing the clock-in screen.
+ * @returns {JSX.Element}
+ */
+const ClockScreen = () => (
+  <div className="flex justify-center bg-gradient-to-br from-emerald-50 to-slate-100 px-4 py-8 sm:py-10">
+    <div className="w-full max-w-[380px] overflow-hidden rounded-[2.2rem] border-[6px] border-slate-900 bg-slate-50 shadow-2xl">
+      <div className="flex h-7 items-center justify-between bg-slate-50 px-6 text-[11px] font-medium text-slate-700">
+        <span>07:58</span>
+        <span className="h-4 w-20 rounded-full bg-slate-900" aria-hidden="true" />
+        <span>LINE</span>
+      </div>
+      <ClockView
+        embedded
+        stage="ready"
+        source="line"
+        employee={{ code: 'EMP-0031', name: 'สมชาย ใจดี' }}
+        position={CLOCK_POSITION}
+        positionError={null}
+        locating={false}
+        geofence={evaluatePosition(CLOCK_POSITION, [CLOCK_SITE])}
+        plan={planPunch(CLOCK_DAYS, CLOCK_NOW, '2026-10-01')}
+        result={null}
+        error={null}
+        busy={false}
+        days={CLOCK_DAYS}
+        linkForm={{ employeeCode: '', nationalId: '' }}
+        now={CLOCK_NOW}
+        onLocate={() => {}}
+        onPunch={() => {}}
+        onLinkField={() => {}}
+        onLink={() => {}}
+      />
+    </div>
+  </div>
+);
+
+const SCREENS = { clock: ClockScreen, inbox: InboxScreen, import: ImportScreen, shift: ShiftScreen, payroll: PayrollScreen, proof: ProofScreen };
 
 /**
  * One screen of the designed application, drawn inside a browser frame.
@@ -363,12 +412,25 @@ const SCREENS = { inbox: InboxScreen, import: ImportScreen, shift: ShiftScreen, 
  * write anything. Filters, ticks and shift cells respond so a visitor can feel
  * how little there is to do.
  *
- * @param {{variant?: 'inbox'|'import'|'shift'|'payroll'|'proof'}} props
+ * @param {{variant?: 'clock'|'inbox'|'import'|'shift'|'payroll'|'proof'}} props
  * @returns {JSX.Element}
  */
 const ProductMock = ({ variant = 'inbox' }) => {
   const Screen = SCREENS[variant] || InboxScreen;
   const active = ACTIVE_MENU[variant] || 'inbox';
+
+  // The clock-in screen is a phone, not a browser window.
+  if (variant === 'clock') {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-[0_24px_60px_-24px_rgba(16,84,60,0.25)]">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-[10px] text-slate-600">
+          <span>หน้าจอพนักงาน เปิดจาก LINE ของบริษัท</span>
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] text-slate-700">ข้อมูลตัวอย่าง</span>
+        </div>
+        <Screen />
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-[0_24px_60px_-24px_rgba(16,84,60,0.25)]">

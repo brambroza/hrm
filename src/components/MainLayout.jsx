@@ -14,7 +14,7 @@ import {
   FileText, Award, Building, CalendarOff, Briefcase, PieChart,
   Wallet, Gift, Search, Bell, ChevronLeft, ChevronRight, Sun,
   Moon, DollarSign, ChevronDown, User, Key, Globe, Calendar, 
-  Calculator, BarChart3
+  Calculator, BarChart3, MapPin
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/customSupabaseClient';
@@ -115,6 +115,13 @@ const MainLayout = () => {
       permission: 'time_attendance'
     },
     {
+      icon: MapPin,
+      label: t('common.clock'),
+      path: '/clock',
+      permission: 'time_attendance',
+      selfService: true
+    },
+    {
       icon: Clock,
       label: t('attendance.otRequest'),
       path: '/ot-requests',
@@ -164,6 +171,7 @@ const MainLayout = () => {
             { label: t('settings.companySettings'), path: '/settings/company', permission: 'company_settings' },
             { label: t('settings.departmentManagement'), path: '/settings/departments', permission: 'department' },
             { label: t('settings.attendancePolicy'), path: '/settings/attendance-policy', permission: 'attendance_policy' },
+            { label: t('workSites.title'), path: '/settings/work-sites', permission: 'time_attendance' },
             { label: t('settings.systemConfig'), path: '/settings/system', permission: 'system_settings' },
         { label: t('settings.auditLog'), path: '/settings/audit-log', permission: 'audit_log' },
         { label: t('settings.userManagement'), path: '/settings/users', permission: 'user_management' },

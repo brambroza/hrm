@@ -11,9 +11,18 @@ const amount = (text) => Number(text.replace(/,/g, '').replace('−', '-'));
 describe('ProductMock', () => {
   it.each(TOUR.map((item) => item.id))('renders the %s screen', (variant) => {
     const html = renderToStaticMarkup(<ProductMock variant={variant} />);
-    expect(html).toContain('GoAlong HR');
+    // The phone screen carries the mark, not the name; every browser screen carries the name.
+    if (variant !== 'clock') expect(html).toContain('GoAlong HR');
     // Every screen says its figures are sample data.
     expect(html).toContain('ข้อมูลตัวอย่าง');
+  });
+
+  it('shows the clock-in screen as a phone inside the radius', () => {
+    const html = renderToStaticMarkup(<ProductMock variant="clock" />);
+    expect(html).toContain('ลงเวลาเข้า');
+    expect(html).toContain('อยู่ในรัศมี ลงเวลาได้');
+    expect(html).toContain('โรงงานระยอง');
+    expect(html).toContain('ผ่าน LINE');
   });
 
   it('falls back to the inbox for an unknown screen', () => {

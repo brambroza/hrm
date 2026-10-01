@@ -6,7 +6,7 @@ import { REVEAL_CSS, startReveal } from '@/lib/revealOnScroll';
 import {
   ArrowRight, Check, ChevronDown, Users, Clock, Timer, CalendarDays, Wallet,
   FileBarChart, Building2, ShieldCheck, Sparkles, Phone, Mail, LineChart, Zap,
-  Sliders, TrendingDown, Server, Plus, ShieldQuestion, ListChecks, FileUp, Scale, Minus, Menu, MapPin,
+  Sliders, TrendingDown, Server, Plus, ShieldQuestion, ListChecks, FileUp, Scale, Minus, Menu, MapPin, Smartphone,
 } from 'lucide-react';
 import ProductMock from '@/components/landing/ProductMock';
 import {
@@ -18,7 +18,7 @@ import { COMPANY, CONTACT, CONTACT_CHANNELS, NAV_LINKS, SITE_NAME, SITE_TAGLINE 
 /** Icon lookup so module data can stay serialisable. */
 const ICONS = {
   Users, Clock, Timer, CalendarDays, Wallet, FileBarChart, Building2, ShieldCheck, Sliders, TrendingDown, Server,
-  ListChecks, FileUp, Scale,
+  ListChecks, FileUp, Scale, Smartphone,
 };
 
 
